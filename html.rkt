@@ -35,6 +35,9 @@
         (str prefix txt suffix)
         "")))
 
+(define escape-txt
+  (change-text '(("%(" . "% (") (")%" . ") %"))))
+
 (define-catch (fullpath-to-data tabtree-root tabtree-path)
   (let* (
         (tabtree-path (split (->string tabtree-path) "."))
