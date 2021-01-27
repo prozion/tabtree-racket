@@ -43,9 +43,9 @@
         ; read <name>
         (res-name (if (mtree)
                     ; if parsing in mtree mode:
-                    (get-matches #px"^\t*([\"λ#A-Za-zА-ЯЁа-яё0-9&@\\-_+/|<>\\?!]+)" line)
+                    (get-matches #px"^\t*([\"λ#*A-Za-zА-ЯЁа-яё0-9&@\\-_+/|<>\\?!]+)" line)
                     ; if parsing in tree mode, include dot:
-                    (get-matches #px"^\t*([\"λ#A-Za-zА-ЯЁа-яё0-9&@.\\-_+/|<>\\?!]+)" line)))
+                    (get-matches #px"^\t*([\"λ#*A-Za-zА-ЯЁа-яё0-9&@.\\-_+/|<>\\?!]+)" line)))
         ; read all parameters, that have a string value
         (res-string-parameters
               (get-matches #px"(\\S+?):[\"`]([^\"`]+?)[\"`]" line))
@@ -228,6 +228,7 @@
         (tree-lines (clean
                       (λ (line) (or
                                   (re-matches? "^\t*;" line)
+                                  (re-matches? "^\\s*;" line)
                                   (re-matches? "^\\s*$" line)))
                       tree-lines))
         ;; leave just categories:

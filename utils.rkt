@@ -99,8 +99,19 @@
 (define (hash-id h)
   ($ id h))
 
-; Important! Tabtree file should contain only one root element. Other first level elements and their chikdren will be deleted after sorting.
-(define-catch (tabtree-sort-and-print #:tabtree (tabtree #f) #:tabtree-file (tabtree-file #f) #:ns (ns #f) #:new-treefile (new-treefile #f) #:sort-by (sort-by default-sort-by) #:sort-by-f (sort-by-f #f) #:sort-f (sort-f default-sort-f))
+; Important! Tabtree file should contain only one root element. Other first level elements and their children will be deleted after sorting.
+(define-catch (tabtree-sort-and-print
+                  #:tabtree (tabtree #f)
+                  #:tabtree-file (tabtree-file #f)
+                  #:ns (ns #f)
+                  #:new-treefile (new-treefile #f)
+                  #:old-treefile (old-treefile #f)
+                  #:keys-order (keys-order #f)
+                  #:sort-by (sort-by default-sort-by)
+                  #:sort-by-numeric-desc (sort-by-numeric-desc #f)
+                  #:sort-by-numeric-asc (sort-by-numeric-asc #f)
+                  #:sort-by-f (sort-by-f #f)
+                  #:sort-f (sort-f default-sort-f))
   (define-catch (tabtree-sort-rec root-item root-hashtree #:sort-by sort-by #:sort-f sort-f #:sort-by-f sort-by-f)
     (cond
       ((not (hash? root-hashtree)) root-hashtree)
@@ -122,6 +133,14 @@
                                               (sort-by-f b)
                                               (hash-ref b sort-by #f))))
                                   (cond
+                                    ((or sort-by-numeric-desc sort-by-numeric-asc)
+                                      (let* ((a-val (or (hash-ref* a sort-by-numeric-desc #f) (hash-ref* a sort-by-numeric-asc #f)))
+                                            (b-val (or (hash-ref* b sort-by-numeric-desc #f) (hash-ref* b sort-by-numeric-asc #f)))
+                                            (a-val (and a-val (->number a-val)))
+                                            (b-val (and b-val (->number b-val)))
+                                            (op (if sort-by-numeric-desc > <)))
+                                        (and a-val b-val
+                                            (op a-val b-val))))
                                     ((and a-val b-val)
                                       ((eval sort-f ns) a-val b-val))
                                     (else
@@ -150,9 +169,14 @@
                                       (ext (and (not-empty? (cdr filename-parts)) (cadr filename-parts))))
                                     (str aname "_" (if ext (str "." ext) ""))))
                                 (else "_new_tabtree.tree"))))
-        (new-treefile-str (tabtree->string hashtree-sorted)))
-      (write-file new-treefile-name new-treefile-str)
-      #t))
+        (new-treefile-str (tabtree->string hashtree-sorted #:keys-order keys-order)))
+    (cond
+      (new-treefile (write-file new-treefile-name new-treefile-str))
+      (old-treefile
+        (write-file old-treefile (read-file tabtree-file))
+        (write-file tabtree-file new-treefile-str))
+      (else (errorf "No files specified to write the result")))
+    #t))
 
 (define-catch (filter-tabtree f tabtree)
   (cond
@@ -190,3 +214,10 @@
       (cond
         ((re-matches? special-keys-re (->string k)) res)
         (else (hash-insert res (cons k (hash-ref item k))))))))
+
+(define-catch (get-item-parameter item-id parameter-name items)
+  (let* ((item (and items (@id item-id items))))
+    (and item (hash-ref* item parameter-name #f))))
+
+(define hash->tabtree
+  (--> hashtree->string hash->hashtree))
