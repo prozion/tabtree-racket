@@ -31,12 +31,13 @@
     (λ (x) (hash-union (hash attr val) x))
     list-of-hashes))
 
-(define-catch (tabtree-item->string item keys-order #:remove-derived-keys (remove-derived-keys #t))
+(define-catch (tabtree-item->string item keys-order #:remove-derived-keys (remove-derived-keys #t) #:quoted-keys (quoted-keys empty))
   (define (parameter->string key params (delimeter ","))
     (cond
       ((list? params) (implode params delimeter))
       ((re-matches? "-f$" (->string key)) (format "`~a`" params)) ; a code snippet
       ((and (string? params) (re-matches? " " params)) (format "\"~a\"" params))
+      ((indexof*? quoted-keys key) (format "\"~a\"" params))
       (else (->string params))))
   (let* ((id ($ id item))
         (keys-to-print (filter-not (λ (x) (let ((x (->string x))) (or (string-prefix? x "_") (equal? x "id")))) (hash-keys item)))
@@ -57,7 +58,13 @@
       ((key (append (or keys-ordered empty) (or tail-keys empty))))
       (format "~a ~a:~a" res key (parameter->string key (hash-ref item key))))))
 
-(define-catch (tabtree->string tabtree #:parent (parent-item #f) #:level (level 0) #:keys-order (keys-order #f) #:sort-f (sort-f (λ (a b) (< (->number (or ($ _order a) 0)) (->number (or ($ _order b) 0))))))
+(define-catch (tabtree->string
+                  tabtree
+                  #:parent (parent-item #f)
+                  #:level (level 0)
+                  #:keys-order (keys-order #f)
+                  #:quoted-keys (quoted-keys empty)
+                  #:sort-f (sort-f (λ (a b) (< (->number (or ($ _order a) 0)) (->number (or ($ _order b) 0))))))
   (let* ((sorted-keys (sort (hash-keys tabtree) sort-f))
         (keys-order (or (and parent-item ($ keys-order parent-item)) keys-order)) ; such a way we can define keys-order only in the topmost element and it will be inherited by all lower elements unless they define their own keys-order
         (keys-order (cond
@@ -73,13 +80,25 @@
             (format "~a~a~a"
                     (if (or (not-empty-string? res) parent-item) (format "~a~n" res) res)
                     (dupstr "\t" level)
-                    (tabtree-item->string k (or ($ keys-order k) keys-order))))
+                    (tabtree-item->string
+                      #:quoted-keys quoted-keys
+                      k
+                      (or ($ keys-order k) keys-order))))
           (else
             (format "~a~a~a~a"
                     (if (or (not-empty-string? res) parent-item) (format "~a~n" res) res) ; don't skip the first line in the file
                     (dupstr "\t" level)
-                    (tabtree-item->string k (or ($ keys-order k) keys-order)) ; first check if current item has keys-order attribute - then apply this one, otherwise use normal keys-order from the parent
-                    (tabtree->string (hash-ref tabtree k) #:parent k #:level (+ 1 level) #:keys-order keys-order #:sort-f sort-f))))))))
+                    (tabtree-item->string
+                      #:quoted-keys quoted-keys
+                      k
+                      (or ($ keys-order k) keys-order)) ; first check if current item has keys-order attribute - then apply this one, otherwise use normal keys-order from the parent
+                    (tabtree->string
+                      (hash-ref tabtree k)
+                      #:parent k
+                      #:level (+ 1 level)
+                      #:keys-order keys-order
+                      #:quoted-keys quoted-keys
+                      #:sort-f sort-f))))))))
 
 ; hashtree -> list-of hash
 (define (get-first-level hashtree)
@@ -90,10 +109,9 @@
   (let* ((root-element (get-root-item hashtree)))
     (hash-ref hashtree root-element #f)))
 
-(define (default-sorter a b)
-  (a-z ($ id a) ($ id b)))
+(define default-sorter tabtree<)
 
-(define default-sort-f A-Za-z)
+(define default-sort-f tabtree<)
 (define default-sort-by 'id)
 
 (define (hash-id h)
@@ -221,3 +239,8 @@
 
 (define hash->tabtree
   (--> hashtree->string hash->hashtree))
+
+(define (get-values value (sep ","))
+  (cond
+    ((not value) empty)
+    (else (string-split value sep))))

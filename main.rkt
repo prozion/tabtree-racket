@@ -43,9 +43,9 @@
         ; read <name>
         (res-name (if (mtree)
                     ; if parsing in mtree mode:
-                    (get-matches #px"^\t*([\"λ#*A-Za-zА-ЯЁа-яё0-9&@\\-_+/|<>\\?!]+)" line)
+                    (get-matches #px"^\t*([\"λ#*A-Za-zА-ЯЁа-яё0-9&@:\\-_+/|<>\\?!]+)" line)
                     ; if parsing in tree mode, include dot:
-                    (get-matches #px"^\t*([\"λ#*A-Za-zА-ЯЁа-яё0-9&@.\\-_+/|<>\\?!]+)" line)))
+                    (get-matches #px"^\t*([\"λ#*A-Za-zА-ЯЁа-яё0-9&@:.\\-_+/|<>\\?!]+)" line)))
         ; read all parameters, that have a string value
         (res-string-parameters
               (get-matches #px"(\\S+?):[\"`]([^\"`]+?)[\"`]" line))
@@ -90,7 +90,8 @@
     ; if some more source-lines...
     (else
       (let* ((line (car source-lines)) ; take the next source-line, now it is a "current line"
-            (line (first (string-split line ";"))) ; take content just before comments
+            ; TODO: don't trigger on ; inside the quotes "". SOLUTION: just skip this splitting action, end parsing parameters by " or \s
+            ; (line (first (string-split line ";"))) ; take content just before comments
             ; (_ (--- line))
             (level (count-tabs line))
             (delta-level (- level (dec (length curpath)))) ; find the level of the current line

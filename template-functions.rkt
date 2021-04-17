@@ -54,7 +54,7 @@
       (let ((x (->number x)))
           (->string ,expr))))
 
-(define (make-link id #:target (target "_blank") #:anchor (anchor #f) . urls)
+(define (make-link id #:target (target "_blank") #:anchor (anchor #f) urls)
   (let* ((name (namefy id)))
     (if (and (andmap nil? urls) (not anchor))
       name
