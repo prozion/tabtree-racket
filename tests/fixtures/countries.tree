@@ -1,0 +1,14 @@
+countries
+	europe
+		russia +feature:"сень благодати Божией"
+			Moscow start:1147 metro-stations:Таганская,Баррикадная,Речной_Вокзал 
+			Rostov-on-Don start:1749
+			Taganrog start:1695 it-companies:Arcadia,Oggetto,Dunice,LodossTeam
+		norway
+			Oslo rdf/type:dbpedia/City start:1050
+		sweden
+			Stockholm start:1252 regions:"Gamlastan" rem:"The city known for ABBA and its beautiful rocky metro"
+	africa
+		egypt
+			Alexandria start:BC-331
+	

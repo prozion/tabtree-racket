@@ -12,8 +12,10 @@
 (define mtree (make-parameter #f))
 
 (define-catch (get-item-name item)
-  (let ((name (hash-ref item 'name #f))
-        (id (hash-ref item key-name #f)))
+  (let* ((name (hash-ref item 'name #f))
+        (__name (hash-ref item '__name #f))
+        (name (or name __name))
+        (id (hash-ref item '__id #f)))
     (cond
       (name #f)
       ((hash-empty? item) #f)
@@ -35,8 +37,8 @@
 ;;; Line has a following format:
 ;;; <name> <parameter-name>:<parameter-value> ... <string-parameter-name>:"<string-parameter-value>" ...
 ;;;
-;;; The resulting hash is (hash <key-name> <name> <parameter-name> <parameter-value> ... <string-parameter-name> "<string-parameter-value>" ...)
-;;; This hash is identified by <key-name> special attribute. Underscore in the beginning of key name is reserved symbol in this system of data representation.
+;;; The resulting hash is (hash <'__id> <name> <parameter-name> <parameter-value> ... <string-parameter-name> "<string-parameter-value>" ...)
+;;; This hash is identified by <'__id> special attribute. Underscore in the beginning of key name is reserved symbol in this system of data representation.
 ;;; All keys that starts with _ has a special meaning.
 (define-catch (get-item line)
   (let* (
@@ -68,12 +70,12 @@
         (res (hash-union string-parameters parameters))
         ; add id to item
         (res (if res-name
-            (hash-insert res (cons key-name (nth (nth res-name 1) 2))) ; if the same key comes several times in item's definition, its values will be fused
+            (hash-insert res (cons '__id (nth (nth res-name 1) 2))) ; if the same key comes several times in item's definition, its values will be fused
             res))
         ; add name to item, if it is not already defined:
         (name (get-item-name res))
         (res (if name
-                  (hash-insert res (cons '_name name))
+                  (hash-insert res (cons '__name name))
                   res))
         )
     res))
@@ -121,18 +123,18 @@
             (tag ($ t item))
             (tags (if tag (cons (cons level tag) tags) tags))
             (tags (uniques tags))
-            ; (_ (when ($ t item) (--- tags ($ id item))))
+            ; (_ (when ($ t item) (--- tags ($ __id item))))
             (item (if (not-empty? tags)
-                      (hash-union (hash '_t (tagcons->string tags)) item)
+                      (hash-union (hash '__t (tagcons->string tags)) item)
                       item))
             ; add label to item
-            (item (hash-union (hash '_order n '_label (if (empty? curpath) "" (last curpath))) item))
+            (item (hash-union (hash '__order n '__label (if (empty? curpath) "" (last curpath))) item))
             ; add item to the result-tree:
             (new-result-tree (cond
                                 ; if empty hash, then don't do anything with result-tree
                                 ((hash-empty? item) result-tree)
                                 ; otherwise add item to the end of parents sequence
-                                (else (hash-tree-add-value-by-id-path* result-tree (reverse parents) item key-name)))))
+                                (else (hash-tree-add-value-by-id-path* result-tree (reverse parents) item '__id)))))
         (fill-tree-iter (cdr source-lines) new-result-tree nextpath (+ 1 n) #:tags tags))))) ; repeat the process for the rest of source lines
 
 (define-catch (add-inherities tab-tree #:inherities (inherities (hash)))

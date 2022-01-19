@@ -1,6 +1,9 @@
 #lang scribble/manual
 
-@title{Odysseus library collection}
+@title{Tabtree}
 @author{Denis Shirshov}
 
-A library with handy general-purpose functions and macro as well as specific ones. Used as a midlayer between a bit nurdy vanilla Racket and practical problems met in the everyday life out on the street.
+A library to handle files of Tabtree format.
+
+@section{Tabtree format}
+A format intended for unified encoding of data, meta-data and ontologies. Convenient both for human-reading and computer-parsing. The format is based on the data model of knowledge graphs.

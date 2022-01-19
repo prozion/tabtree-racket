@@ -13,7 +13,7 @@
 (define <iteratees> (make-parameter (hash)))
 
 (define (get-ht-item-name item)
-  (titlefy (or ($ name item) ($ id item) "")))
+  (titlefy (or ($ name item) ($ __id item) "")))
 
 ; (define (url-if-possible name url)
 ;   (if (and url (non-empty-string? url))

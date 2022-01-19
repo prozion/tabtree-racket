@@ -8,7 +8,7 @@
 (provide (all-defined-out))
 
 (define (get-name item)
-  (or ($ name item) ($ _name item) (namefy ($ id item))))
+  (or ($ name item) ($ __name item) (namefy ($ __id item))))
 
 (define (prn param (prefix "") (postfix ""))
   (if (and param (non-empty-string? param))

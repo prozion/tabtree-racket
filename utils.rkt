@@ -39,7 +39,7 @@
       ((and (string? params) (re-matches? " " params)) (format "\"~a\"" params))
       ((indexof*? quoted-keys key) (format "\"~a\"" params))
       (else (->string params))))
-  (let* ((id ($ id item))
+  (let* ((id ($ __id item))
         (keys-to-print (filter-not (λ (x) (let ((x (->string x))) (or (string-prefix? x "_") (equal? x "id")))) (hash-keys item)))
         (keys-to-print (if remove-derived-keys
                             (filter-not (λ (k) (regexp-match? #rx"^\\+.+" (->string k))) keys-to-print)
@@ -112,10 +112,10 @@
 (define default-sorter tabtree<)
 
 (define default-sort-f tabtree<)
-(define default-sort-by 'id)
+(define default-sort-by '__id)
 
 (define (hash-id h)
-  ($ id h))
+  ($ __id h))
 
 ; Important! Tabtree file should contain only one root element. Other first level elements and their children will be deleted after sorting.
 (define-catch (tabtree-sort-and-print
@@ -167,7 +167,7 @@
                                       (default-sort-f a-val b-val))))))))
             (for/hash
               ((k (sort root-hashtree-keys sorter)) (i (range 1 (inc (length root-hashtree-keys)))))
-              (values (hash-union (hash '_order i) k) (tabtree-sort-rec k (hash-ref root-hashtree k) #:sort-by sort-by #:sort-by-f sort-by-f #:sort-f sort-f)))))))
+              (values (hash-union (hash '__order i) k) (tabtree-sort-rec k (hash-ref root-hashtree k) #:sort-by sort-by #:sort-by-f sort-by-f #:sort-f sort-f)))))))
   (let* ((hashtree
                 (cond
                   (tabtree tabtree)
@@ -244,3 +244,20 @@
   (cond
     ((not value) empty)
     (else (string-split value sep))))
+
+(define-catch (extract-tabtree-frame input-file output-file)
+  (let* (
+        ;; take all lines from the file:
+        (tree-lines (read-file-by-lines input-file))
+        ;; remove comment lines:
+        (tree-lines (clean
+                      (λ (line) (or
+                                  (re-matches? "^\t*;" line)
+                                  (re-matches? "^\\s*;" line)
+                                  (re-matches? "^\\s*$" line)))
+                      tree-lines))
+        ;; leave just categories:
+        (tree-lines (filter category? tree-lines))
+        )
+    (write-file-by-lines output-file tree-lines))
+    #t)
