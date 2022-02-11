@@ -1,0 +1,13 @@
+String := (DoublequotedString, BackquotedString)
+Comment := (SeparateComment, InlineComment)
+
+Reference := Symbol
+Date := Symbol
+Code := BackquotedString
+Currency := Symbol
+
+Keyword := Symbol
+Value := Reference, String, Date, Code, Currency
+
+Tabtree1 := Hash(Hash(Keyword, Value), Tabtree1)
+Tabtree2 := Hash(Id, Hash(Keyword, Value))
