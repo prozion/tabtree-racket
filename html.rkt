@@ -1,6 +1,7 @@
 #lang racket
 
 (require odysseus)
+(require tabtree/tabtree1)
 (require "main.rkt")
 (require "utils.rkt")
 
