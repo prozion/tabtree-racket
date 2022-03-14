@@ -222,20 +222,3 @@
                             line))
                         tree-lines)))
       (fill-tree-iter tree-lines (hash) empty))))
-
-(define-catch (extract-tabtree-frame input-file output-file)
-  (let* (
-        ;; take all lines from the file:
-        (tree-lines (read-file-by-lines input-file))
-        ;; remove comment lines:
-        (tree-lines (clean
-                      (λ (line) (or
-                                  (re-matches? "^\t*;" line)
-                                  (re-matches? "^\\s*;" line)
-                                  (re-matches? "^\\s*$" line)))
-                      tree-lines))
-        ;; leave just categories:
-        (tree-lines (filter category? tree-lines))
-        )
-    (write-file-by-lines output-file tree-lines))
-    #t)
