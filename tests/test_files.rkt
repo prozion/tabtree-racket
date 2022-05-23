@@ -25,5 +25,5 @@
   ; check namespaces
   (check-equal? ($t countries.europe.norway.Oslo.rdf/type countries) 'dbpedia/City)
   (check-equal? ($t countries.europe.norway.Oslo.rdf/type countries-namespaced 'test) 'dbpedia/City)
-  (check-equal? ($t countries.europe.russia.Taganrog.it-companies countries-namespaced 'test) '(test/Arcadia test/Oggetto test/Dunice test/LodossTeam))
+  (check-equal? ($t countries.europe.russia.Taganrog.it-companies countries-namespaced 'test) '(test--Arcadia test--Oggetto test--Dunice test--LodossTeam))
 )
