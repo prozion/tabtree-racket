@@ -1,0 +1,43 @@
+foo +i:100 +hi-rel:subfoo
+	bar index:1,2,3 refs:a,b20,Глушко_29 string:"Однажды, quux and foox decided to walk northwards" multiple-strings:"qux","foo and bar","foo,bar,quux","foo, bar and quux" url:vk.com/foo,taganrog.su another-url:http://vk.com/foo,https://taganrog.su
+	baz owl/equivalentClass:_
+		_ a:owl/Restriction owl/onProperty:baz-value owl/someValuesFrom:owl/Thing
+	quux owl/equivalentClass:_,_1
+		scipadoo
+		_ a:owl/Restriction owl/onProperty:quux-value owl/someValuesFrom:owl/Thing
+		_1 owl/equivalentClass:`(union-of SomeQuuxes _)`
+			_ a:owl/Restriction owl/onProperty:quux-qux owl/allValuesFrom:HisQuuxity
+section1 
+	Абрикосовая +hi-inv-rel:street
+		Абрикосовая_5
+		Кравцова_4
+		Абрикосовая_10
+		Абрикосовая_12
+	Виноградная +hi-inv-rel:street
+		Виноградная_1
+		Корчма
+	Тенистая +hi-inv-rel:street
+		Место_для_Юрия_Антонова
+namespaces
+	zendix pars:starwars/Luke_Skywalker,startrack/Captain_Kirk,Dar_Veter
+personalities
+	Юрий_Антонов bdate:19.02.1945
+	Снусмумрик bdate:05.1925
+Cell +hi-rel:consists-of +hi-inv-rel:part-of
+	Cytosol
+		Cytoskeleton
+			Axoneme
+		Lyzosome
+			Lyzosomal_membrane a:Membrane
+		Peroxisome
+			Peroxisomal_membrane a:Membrane
+		Endosome
+			Endosoma_membrane a:Membrane
+	Nucleus
+		Nuclear_membrane
+			Outer_nuclear_membrane a:Membrane
+			Inner_nuclear_membrane a:Membrane
+		Nucleoplasm
+Compartment +hi-inv-rel:part-of
+	Endosome
+    

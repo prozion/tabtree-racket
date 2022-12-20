@@ -3,7 +3,7 @@
 ;; in this file we represent functions that modify elements of the tree
 
 (require odysseus)
-(require "tabtree2.rkt")
+(require "tabtree.rkt")
 (require compatibility/defmacro)
 (require (for-syntax odysseus racket/list))
 

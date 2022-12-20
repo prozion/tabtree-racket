@@ -1,5 +1,5 @@
 #lang racket
 
-(require "tabtree1.rkt")
+(require "src/tabtree_flat/tabtree.rkt")
 
 (provide (all-defined-out))
