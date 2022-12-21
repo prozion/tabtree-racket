@@ -2,7 +2,7 @@
 
 (require rackunit)
 (require odysseus)
-(require "../src/tabtree_flat/tabtree.rkt")
+(require "../tabtree.rkt")
 
 (define countries (parse-tabtree "fixtures/countries.tree"))
 (define countries-namespaced (parse-tabtree "fixtures/countries.tree" #:namespace "test"))
