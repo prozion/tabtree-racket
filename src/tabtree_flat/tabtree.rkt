@@ -31,8 +31,6 @@
 (define HIERARCHY_RELATION "hi-rel")
 (define HIERARCHY_INVERSE_RELATION "hi-inv-rel")
 
-; (define NAMESPACE-DELIMETER "/")
-
 (define *ns* (make-parameter NONE))
 (define *parent-id* (make-parameter NONE))
 (define *tabtree* (make-parameter (hash)))
@@ -41,10 +39,6 @@
 (define id-regexp (pregexp id-regexp-str))
 (define key-regexp-str "[_a-zA-ZА-ЯЁа-яёα-ω0-9/|+\\-]+")
 (define category-regexp "^\t*[_a-zа-яёα-ωøå.][A-Za-zА-Яа-яё0-9_+/\\-]+\\s*.*$")
-
-; (define string-regexp #px"(\\S+?):[\"]([^\"]+?)[\"]")
-; (define multiples-regexp #px"(\\S+?):(\\S*,\\S*)")
-; (define pair-regexp #px"(\\S+?):(\\S+)")
 
 (define (none? ns-or-id)
   (equal? ns-or-id NONE))
@@ -336,9 +330,6 @@
         (root-tabs-count (count-tabs root-line))
         (root-item (get-item root-line))
         (root-id (hash-ref root-item "__id" NONE))
-        ; (root-item (if (anon-item-id? root-id)
-        ;               (item+ root-item (hash "__anon?" "true"))
-        ;               root-item))
         (old-root-item (hash-ref (*tabtree*) root-id ITEM_NONE))
         (local-inherities (get-inherities root-item))
         (all-inherities (hash-union global-inherities local-inherities))
@@ -486,7 +477,6 @@
   (parameterize ((*ns* (or ns NONE)))
     (cond
       ((nodes-path? path tabtree)
-        ; (get-subtree path tabtree))
         (hash-ref
           (hash-ref tabtree (last path) ITEM_NONE)
           "__children"
@@ -495,10 +485,6 @@
         (get-parameter path tabtree)))))
 
 (define-macro ($t path tabtree . ns)
-  (let ((path (map str (symbol-split path ".")))
+  (let ((path (-> path ~a (string-split ".")))
         (namespace (if (empty? ns) #f (first ns))))
     `($tf '(,@path) ,tabtree ,namespace)))
-      ; `(parameterize ((*ns* ,namespace))
-      ;   (cond
-      ;     ((nodes-path? '(,@path-as-vector) ,tabtree) (get-subtree '#(,@path-as-list) ,tabtree))
-      ;     (else (get-parameter '#(,@path-as-list) ,tabtree))))))

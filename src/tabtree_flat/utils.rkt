@@ -23,6 +23,9 @@
     (hash-filter (λ (k _)  (indexof? children-ids k)) tabtree-h)))
 
 (define-macro ($t path tabtree-h . ns)
+    (define (symbol-split sym delimeter)
+      (map ->symbol
+        (string-split (->string sym) delimeter)))
     (let ((path-as-list (symbol-split path "."))
           (namespace (if (empty? ns) #f (first ns))))
       `(parameterize ((ns ,namespace))
