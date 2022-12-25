@@ -5,30 +5,27 @@
 (require odysseus)
 (require "tabtree.rkt")
 (require compatibility/defmacro)
-(require (for-syntax odysseus racket/list))
+(require (for-syntax odysseus racket/list racket/string))
 
 (provide (all-defined-out))
 
-(define-catch (get-subtree path tabtree-h)
-  (define (collect-children next-children (checked-children empty))
-    (cond
-      ((empty? next-children) checked-children)
-      (else
-        (let* ((next-child (first next-children))
-              (checked-children (pushr checked-children next-child))
-              (new-children (or ($ __children (hash-ref* tabtree-h next-child (hash))) empty))
-              (new-next-children (remove-duplicates (append (rest next-children) (minus new-children checked-children)))))
-          (collect-children new-next-children checked-children)))))
-  (let ((children-ids (collect-children (list (last path)))))
-    (hash-filter (λ (k _)  (indexof? children-ids k)) tabtree-h)))
-
-(define-macro ($t path tabtree-h . ns)
-    (define (symbol-split sym delimeter)
-      (map ->symbol
-        (string-split (->string sym) delimeter)))
-    (let ((path-as-list (symbol-split path "."))
-          (namespace (if (empty? ns) #f (first ns))))
-      `(parameterize ((ns ,namespace))
+(define-catch (tabtree> a b)
+  (cond
+    ((empty-string? a) #f)
+    ((empty-string? b) #t)
+    (else
+      (let* ((letters (string-explode "_абвгдеёжзийклмнопрстуфхцчшщьыъэюяabcdefghijklmnopqrstuvwxyz0123456789"))
+            (a (string-downcase a))
+            (b (string-downcase b))
+            (a-first (string-first a))
+            (a-rest (string-rest a))
+            (b-first (string-first b))
+            (b-rest (string-rest b))
+            (a-pos (index-of letters a-first))
+            (b-pos (index-of letters b-first)))
         (cond
-          ((nodes-path? '(,@path-as-list) ,tabtree-h) (get-subtree '(,@path-as-list) ,tabtree-h))
-          (else (get-parameter '(,@path-as-list) ,tabtree-h))))))
+          ((equal? a-first b-first) (tabtree> a-rest b-rest))
+          (else (> a-pos b-pos)))))))
+
+(define (tabtree< a b)
+  (not (tabtree> a b)))

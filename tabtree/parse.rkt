@@ -2,10 +2,10 @@
 
 (require odysseus)
 (require compatibility/defmacro)
-(require (for-syntax odysseus racket/list))
+(require (for-syntax odysseus racket/list racket/string racket/format))
+(require "globals.rkt")
 
-(provide deplus NONE ITEM_NONE get-subtree) ; for testing
-(provide parse-tabtree $t $tf)
+(provide deplus nodes-path? none? not-none? item-none? item-not-none? get-parameter parse-tabtree)
 
 ; (: ItemValue (U String (Listof String) (Mutable-HashTable String String)))
 ; (: Item (Mutable-HashTable String ItemValue))
@@ -25,17 +25,12 @@
 ;;       "c2" (hash "__children" '("c21"))
 ;;       "c21" (hash))
 
-(define NONE "")
-(define ITEM_NONE (hash))
-
-(define HIERARCHY_RELATION "hi-rel")
-(define HIERARCHY_INVERSE_RELATION "hi-inv-rel")
-
-(define *ns* (make-parameter NONE))
 (define *parent-id* (make-parameter NONE))
 (define *tabtree* (make-parameter (hash)))
+(define *parse-info* (make-parameter (hash)))
+(define *source-lines* (make-parameter empty))
 
-(define id-regexp-str "[_A-Za-zА-ЯЁа-яёΑ-Ωα-ωØÅøå][\"#*A-Za-zА-ЯЁа-яёΑ-Ωα-ω0-9ØÅøå&@:._+/|<>\\?!\\-]*")
+(define id-regexp-str "[_A-Za-zА-ЯЁа-яёΑ-Ωα-ωØÅøå0-9][\"#*A-Za-zА-ЯЁа-яёΑ-Ωα-ω0-9ØÅøå&@:._+/|<>\\?!\\-]*")
 (define id-regexp (pregexp id-regexp-str))
 (define key-regexp-str "[_a-zA-ZА-ЯЁа-яёα-ω0-9/|+\\-]+")
 (define category-regexp "^\t*[_a-zа-яёα-ωøå.][A-Za-zА-Яа-яё0-9_+/\\-]+\\s*.*$")
@@ -43,16 +38,16 @@
 (define (none? ns-or-id)
   (equal? ns-or-id NONE))
 
-(define not-none? (inverse none?))
+(define not-none? (negate none?))
 
 (define (item-none? item)
   (equal? item ITEM_NONE))
 
-(define item-not-none? (inverse item-none?))
+(define item-not-none? (negate item-none?))
 
 (define-catch (ns-decompose s)
   (let* ((parts (string-split s "/"))
-        (namespace (but-last parts))
+        (namespace (butlast parts))
         (namespace (if (empty? namespace) NONE (first namespace)))
         (baseid (last parts)))
     (values namespace baseid)))
@@ -91,7 +86,7 @@
   (re-matches? (re-format "^~a$" id-regexp) s))
 
 (define-catch (special? s)
-  (starts-with? s "__"))
+  (string-prefix? s "__"))
 
 (define-catch (remove-specials item)
   (hash-filter (λ (k v) (not (special? k))) item))
@@ -109,7 +104,7 @@
   (true? (hash-ref tabtree (ns+ (last path)) #f)))
 
 (define-catch (inherited? key)
-  (starts-with? (baseid key) "+"))
+  (string-prefix? (baseid key) "+"))
 
 (define-catch (inheritance+ key)
   (if (inherited? key)
@@ -119,7 +114,7 @@
 (define-catch (deplus s)
   (let*-values
       (((ns baseid) (ns-decompose s))
-      ((deplused-baseid) (if (starts-with? baseid "+")
+      ((deplused-baseid) (if (string-prefix? baseid "+")
                             (substring baseid 1)
                             baseid)))
     (ns-compose ns deplused-baseid)))
@@ -127,7 +122,7 @@
 (define (anon-item-id? id)
   (re-matches? #px"^_[1-9]?$" id))
 
-(define (rename-anon-item parent-id child-id)
+(define-catch (rename-anon-item parent-id child-id)
   (if (and (not-none? parent-id) (not-none? child-id) (anon-item-id? child-id))
     (ns+ (format "~a~a" parent-id child-id))
     child-id))
@@ -245,9 +240,11 @@
                       multiple-string-parameters
                       multiple-url-parameters)))
     ; add id to item, if parsed successfuly
-    (if (not-none? line-id)
-        (hash-union parameters (hash "__id" (ns+ line-id)))
-        ITEM_NONE)))
+    (cond
+      ((not-none? line-id)
+        (hash-union parameters (hash "__id" (ns+ line-id))))
+      (else
+        ITEM_NONE))))
 
 (define-catch (merge-item-vals v1 v2)
   (let ((result
@@ -279,7 +276,7 @@
 ; (: item- : (-> Item (Listof String) Item))
 (define-catch (item- item keys-to-remove)
   (hash-filter
-    (λ (k v) (not (indexof? keys-to-remove k)))
+    (λ (k v) (not (index-of? keys-to-remove k)))
     item))
 
 ; (: tabtree- : (-> ItemId Tabtree Tabtree))
@@ -312,7 +309,7 @@
 
 (define-catch (count-tabs line)
   (let loop ((count 0)
-            (line (explode line)))
+            (line (string-explode line)))
     (cond
       ((equal? (first line) "\t") (loop (+ 1 count) (rest line)))
       (else count))))
@@ -326,6 +323,7 @@
   (let loop ((source-lines source-lines))
     (match-let*
         ((root-line (first source-lines))
+        (line-number (~a (add1 (index-of (*source-lines*) root-line))))
         (next-lines (rest source-lines))
         (root-tabs-count (count-tabs root-line))
         (root-item (get-item root-line))
@@ -378,8 +376,15 @@
         (root-item (hash-union
                       (hash-union old-root-item root-item
                         #:combine merge-item-vals)
-                      (hash "__id" root-id)))
-        (old-tabtree (*tabtree*)))
+                      (hash "__id" root-id "__line" (~a line-number))))
+        (old-tabtree (*tabtree*))
+        (duplicated-id? (hash-ref old-tabtree root-id #f)))
+      (when duplicated-id?
+          (let* (
+                (old-root-line (hash-ref old-root-item "__line")))
+            (if (hash-ref-path (*parse-info*) (list "duplicated-ids" root-id))
+              (*parse-info* (hash-update* (*parse-info*) (list "duplicated-ids" root-id) (λ (v) (append-elements v line-number))))
+              (*parse-info* (hash-set* (*parse-info*) (list "duplicated-ids" root-id) (list old-root-line line-number))))))
       (*tabtree* (hash-union
                     old-tabtree
                     (hash root-id root-item)
@@ -403,7 +408,7 @@
                         (and
                           (item-not-none? children)
                           (list? children)
-                          (indexof? children child-id))))
+                          (index-of? children child-id))))
                     items))
         (result (if (not-empty? result)
                   (first result)
@@ -435,31 +440,11 @@
         (hash))
       #:combine merge-item-vals)))
 
-(define-catch (get-subtree path tabtree)
-  (define (collect-children next-children (checked-children empty))
-    (cond
-      ((empty? next-children) checked-children)
-      (else
-        (let* ((next-child (first next-children))
-              (checked-children (pushr checked-children next-child))
-              (new-children (or
-                              (hash-ref
-                                (hash-ref tabtree next-child (hash))
-                                "__children"
-                                #f)
-                              empty))
-              (new-next-children
-                (remove-duplicates
-                  (append
-                    (rest next-children)
-                    (minus new-children checked-children)))))
-          (collect-children new-next-children checked-children)))))
-  (let ((children-ids (collect-children (list (last path)))))
-    (hash-filter (λ (k _)  (indexof? children-ids k)) tabtree)))
-
-(define-catch (parse-tabtree treefile #:namespace (namespace NONE))
-  (parameterize ((*ns* namespace))
-    (let* ((lines (read-file-by-lines treefile))
+(define-catch (parse-tabtree treefile #:namespace (namespace NONE) #:parse-info (parse-info #f))
+  (parameterize ((*ns* namespace)
+                 (*parse-info* (hash "duplicated-ids" (hash)))
+                 (*source-lines* (read-file-by-lines treefile)))
+    (let* ((lines (*source-lines*))
            (lines (clean
                     (λ (line)
                       (or
@@ -471,20 +456,6 @@
            (tabtree (hash-map
                       (λ (k v) (values k (add-hierarchy-relations v tabtree)))
                       tabtree)))
-      tabtree)))
-
-(define-catch ($tf path tabtree ns)
-  (parameterize ((*ns* (or ns NONE)))
-    (cond
-      ((nodes-path? path tabtree)
-        (hash-ref
-          (hash-ref tabtree (last path) ITEM_NONE)
-          "__children"
-          NONE))
-      (else
-        (get-parameter path tabtree)))))
-
-(define-macro ($t path tabtree . ns)
-  (let ((path (-> path ~a (string-split ".")))
-        (namespace (if (empty? ns) #f (first ns))))
-    `($tf '(,@path) ,tabtree ,namespace)))
+      (if parse-info
+        (*parse-info*)
+        tabtree))))

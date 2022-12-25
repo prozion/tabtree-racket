@@ -1,5 +1,5 @@
 #lang racket
 
-(require "src/tabtree.rkt" "src/utils.rkt")
+(require "globals.rkt" "parse.rkt" "query.rkt")
 
-(provide (all-from-out "src/tabtree.rkt" "src/utils.rkt"))
+(provide (all-from-out "globals.rkt" "parse.rkt" "query.rkt"))
