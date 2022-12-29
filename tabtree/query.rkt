@@ -30,6 +30,11 @@
   (let ((children-ids (collect-children (list (last path)))))
     (hash-filter (λ (k _)  (index-of? children-ids k)) tabtree)))
 
+(define-catch (get-leaves tabtree)
+  (hash-filter
+    (λ (k v) (empty? ($ __children v)))
+    tabtree))
+
 (define-catch ($tf path tabtree (ns #f))
   (parameterize ((*ns* (or ns NONE)))
     (let ((path (map ~a path)))
@@ -69,6 +74,10 @@
 
 (define-catch (get-item-by-id id tabtree)
   (get-$2 (list id) tabtree))
+
+(define-macro ($2 dotted_path tabtree)
+  (let ((path (string-split (~a dotted_path) ".")))
+    `(get-$2 ,path ,tabtree)))
 
 ; get children ids
 (define-catch (get-$3-ids path tabtree)
