@@ -32,7 +32,9 @@
 
 (define-catch (get-leaves tabtree)
   (hash-filter
-    (λ (k v) (empty? ($ __children v)))
+    (λ (k v) (or
+                (not ($ __children v))
+                (empty? ($ __children v))))
     tabtree))
 
 (define-catch ($tf path tabtree (ns #f))
@@ -73,7 +75,7 @@
     item))
 
 (define-catch (get-item-by-id id tabtree)
-  (get-$2 (list id) tabtree))
+  (get-$2 (list (~a id)) tabtree))
 
 (define-macro ($2 dotted_path tabtree)
   (let ((path (string-split (~a dotted_path) ".")))
@@ -113,3 +115,10 @@
     (or
       (has-parent? item ancestor-id)
       (ormap (curryr has-ancestor? ancestor-id tabtree) parents))))
+
+;;;; (: $id : (-> Symbol (Listof Item) Item))
+(define-macro ($id id items)
+  `(let ((matches (filter (λ (item) (equal? ($ __id item) ,(~a id))) ,items)))
+      (if (empty? matches)
+        (hash)
+        (first matches))))
