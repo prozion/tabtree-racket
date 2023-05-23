@@ -29,9 +29,13 @@
             ; (not mtree?)
             (not tree?)) (error (format "process-html-template: no corresponded tabtree file for the path: ~a" tabtree-path))))
         ; (tabtree (if mtree? (parse-tab-mtree tab-mtree-filepath) (parse-tab-tree tab-tree-filepath)))
-        (tabtree (parse-tabtree tab-tree-filepath))
+        (tabtree (parse-tabtree (path->string tab-tree-filepath)))
         (datapath (cdr tabtree-path))
-        (data (if (empty? datapath) tabtree (or (get-$1 datapath tabtree) (get-$2 datapath tabtree))))
+        (data (if (empty? datapath)
+                  tabtree
+                  (or
+                    (get-$1 datapath tabtree)
+                    (get-$2 datapath tabtree))))
         )
     data))
 

@@ -5,7 +5,7 @@
 (require (for-syntax odysseus racket/list racket/string racket/format))
 (require "globals.rkt")
 
-(provide deplus nodes-path? none? not-none? item-none? item-not-none? get-parameter parse-tabtree)
+(provide deplus special? nodes-path? none? not-none? item-none? item-not-none? get-parameter parse-tabtree namespace baseid namespaced? id)
 
 ; (: ItemValue (U String (Listof String) (Mutable-HashTable String String)))
 ; (: Item (Mutable-HashTable String ItemValue))
@@ -30,7 +30,7 @@
 (define *parse-info* (make-parameter (hash)))
 (define *source-lines* (make-parameter empty))
 
-(define id-regexp-str "[_A-Za-zА-ЯЁа-яёΑ-Ωα-ωØÅøå0-9][\"#*A-Za-zА-ЯЁа-яёΑ-Ωα-ω0-9ØÅøå&@:._+/|<>\\?!\\-]*")
+(define id-regexp-str "[_A-Za-zА-ЯЁа-яёΑ-Ωα-ωØÅøå0-9№\\*][\"#*A-Za-zА-ЯЁа-яёΑ-Ωα-ω0-9№ØÅøå&@:._+/\\*|<>\\?!\\-]*")
 (define id-regexp (pregexp id-regexp-str))
 (define key-regexp-str "[_a-zA-ZА-ЯЁа-яёα-ω0-9/|+\\-]+")
 (define category-regexp "^\t*[_a-zа-яёα-ωøå.][A-Za-zА-Яа-яё0-9_+/\\-]+\\s*.*$")
@@ -168,13 +168,13 @@
             (v-pattern "[\"].*?[\"]")
             line
             (λ (v)
-              (string-replace v "\"" ""))))
+              (string-replace v "\"" "\""))))
         (string-parameters2
           (collect-matched-kv
             (v-pattern "['][^']*?[']")
             line
             (λ (v)
-              (string-replace v "'" ""))))
+              (string-replace v "'" "\""))))
         (string-parameters (hash-union string-parameters1 string-parameters2))
         (integer-parameters
           (collect-matched-kv
@@ -440,10 +440,36 @@
         (hash))
       #:combine merge-item-vals)))
 
-(define-catch (parse-tabtree treefile #:namespace (namespace NONE) #:parse-info (parse-info #f))
+(define-catch (expand-file-insertions tabtree-source tabtree-filepath)
+  (define global-path (get-path tabtree-filepath))
+  (for/fold
+    ((res empty))
+    ((line tabtree-source))
+    (let ((file-insertion-match (regexp-match #rx"^[^;]*\\[(.*)\\]" line)))
+      (if file-insertion-match
+          (let* (
+                (base-tabs-number (count-tabs line))
+                (filepath (second file-insertion-match))
+                (local-path (get-path filepath))
+                (filename (get-filename filepath))
+                (full-filepath (format "~a~a~a"
+                                  (if (empty-string? global-path) "" (str global-path "/"))
+                                  (if (empty-string? local-path) "" (str local-path "/"))
+                                  filename))
+                (file-content (expand-file-insertions
+                                (read-file-by-lines full-filepath)
+                                full-filepath))
+                (file-content (map (λ (line2) (string-append (dupstr "\t" base-tabs-number) line2)) file-content))
+                )
+            (append res file-content))
+          (pushr res line)))))
+
+(define-catch (parse-tabtree treefile #:namespace (namespace NONE) #:parse-info (parse-info #f) #:save-expanded-to (save-expanded-to #f))
+  (define source-lines (expand-file-insertions (read-file-by-lines treefile) treefile))
+  (when save-expanded-to (write-file save-expanded-to (string-join source-lines "\n")))
   (parameterize ((*ns* namespace)
                  (*parse-info* (hash "duplicated-ids" (hash)))
-                 (*source-lines* (read-file-by-lines treefile)))
+                 (*source-lines* source-lines))
     (let* ((lines (*source-lines*))
            (lines (clean
                     (λ (line)

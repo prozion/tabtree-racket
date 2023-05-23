@@ -9,7 +9,6 @@
 (define filepath (get-command-value (current-command-line-arguments)))
 (define options (get-command-options (current-command-line-arguments)))
 
-
 (define (check-duplicated-ids)
   (define tabtree (parse-tabtree filepath #:parse-info #t))
   (let* (

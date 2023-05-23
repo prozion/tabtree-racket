@@ -1,5 +1,4 @@
 countries
-	; some comments
 	europe +hierarchy-relation:includes a:Continent
 		russia +feature:"RUNNING" a:Country +a:dbpedia/City
 			Moscow start:1147 metro-stations:Таганская,Баррикадная,Речной_Вокзал
