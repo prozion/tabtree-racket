@@ -12,26 +12,16 @@
 (define-catch (deidify s)
   (-> s string-titlecase (string-replace "_" " ")))
 
-(define-catch (tabtree> a b)
-  (cond
-    ((empty-string? a) #f)
-    ((empty-string? b) #t)
-    (else
-      (let* ((letters (string-explode "_абвгдеёжзийклмнопрстуфхцчшщьыъэюяabcdefghijklmnopqrstuvwxyz0123456789"))
-            (a (string-downcase a))
-            (b (string-downcase b))
-            (a-first (string-first a))
-            (a-rest (string-rest a))
-            (b-first (string-first b))
-            (b-rest (string-rest b))
-            (a-pos (index-of letters a-first))
-            (b-pos (index-of letters b-first)))
-        (cond
-          ((equal? a-first b-first) (tabtree> a-rest b-rest))
-          (else (> a-pos b-pos)))))))
+(define-catch (id> item-a item-b)
+  (let ((id-a ($ __id item-a))
+        (id-b ($ __id item-b)))
+    (and
+      id-a
+      id-b
+      (id-string>? id-a id-b))))
 
-(define (tabtree< a b)
-  (not (tabtree> a b)))
+(define (id< item-a item-b)
+  (not (id> item-a item-b)))
 
 (define (filter-map-tabtree f tabtree)
   (for/fold
@@ -70,3 +60,18 @@
           (if old-v
             (hash-set res deplused-k old-v)
             (hash-set res deplused-k v)))))))
+
+(define (get-children-ids tabtree)
+  (->>
+    tabtree
+    hash-values
+    (map (λ (item) ($ __children item)))
+    flatten
+    remove-duplicates
+    (filter-not false?)))
+
+(define (get-upper-level-ids tabtree)
+  (let* ((all-ids (hash-keys tabtree))
+        (children-ids (get-children-ids tabtree))
+        (upper-level-ids (minus all-ids children-ids)))
+    upper-level-ids))

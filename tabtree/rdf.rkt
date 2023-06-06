@@ -7,7 +7,7 @@
 (require (prefix-in parse/ "parse.rkt"))
 (require (prefix-in utils/ "utils.rkt"))
 
-(provide tabtree->rdf)
+(provide tabtree->rdf rdf-list?)
 
 (define aliases (hash
     "a" "rdf/type"

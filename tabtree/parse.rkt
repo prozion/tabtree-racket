@@ -5,7 +5,7 @@
 (require (for-syntax odysseus racket/list racket/string racket/format))
 (require "globals.rkt")
 
-(provide deplus special? nodes-path? none? not-none? item-none? item-not-none? get-parameter parse-tabtree namespace baseid namespaced? id)
+(provide deplus special? nodes-path? none? not-none? item-none? item-not-none? get-item get-parameter parse-tabtree namespace baseid namespaced? id inheritance+)
 
 ; (: ItemValue (U String (Listof String) (Mutable-HashTable String String)))
 ; (: Item (Mutable-HashTable String ItemValue))
@@ -30,9 +30,9 @@
 (define *parse-info* (make-parameter (hash)))
 (define *source-lines* (make-parameter empty))
 
-(define id-regexp-str "[_A-Za-zА-ЯЁа-яёΑ-Ωα-ωØÅøå0-9№\\*][\"#*A-Za-zА-ЯЁа-яёΑ-Ωα-ω0-9№ØÅøå&@:._+/\\*|<>\\?!\\-]*")
+(define id-regexp-str "[?_A-Za-zА-ЯЁа-яёΑ-Ωα-ωØÅøå0-9№\\*][\"#*A-Za-zА-ЯЁа-яёΑ-Ωα-ω0-9№ØÅøå&@:._?+/\\*|<>\\?!\\-]*")
 (define id-regexp (pregexp id-regexp-str))
-(define key-regexp-str "[_a-zA-ZА-ЯЁа-яёα-ω0-9/|+\\-]+")
+(define key-regexp-str "[_a-zA-ZА-ЯЁа-яёα-ω0-9/|+*\\-]+")
 (define category-regexp "^\t*[_a-zа-яёα-ωøå.][A-Za-zА-Яа-яё0-9_+/\\-]+\\s*.*$")
 
 (define (none? ns-or-id)
@@ -106,15 +106,33 @@
 (define-catch (inherited? key)
   (string-prefix? (baseid key) "+"))
 
+(define-catch (strong-key? key)
+  (string-prefix? (baseid key) "*"))
+
+(define-catch (strong-key key)
+  (if (strong-key? key)
+    key
+    (ns+ (str "*" (baseid key)))))
+
+(define-catch (destrong key)
+  (deplus key "*"))
+
+(define-catch (get-strongs item)
+  (let* ((strongs (filter strong-key? (hash-keys item))))
+    (for/fold
+      ((res (hash)))
+      ((strong strongs))
+      (hash-union res (hash (destrong strong) (hash-ref item strong))))))
+
 (define-catch (inheritance+ key)
   (if (inherited? key)
     key
     (ns+ (str "+" (baseid key)))))
 
-(define-catch (deplus s)
+(define-catch (deplus s (prefix "+"))
   (let*-values
       (((ns baseid) (ns-decompose s))
-      ((deplused-baseid) (if (string-prefix? baseid "+")
+      ((deplused-baseid) (if (string-prefix? baseid prefix)
                             (substring baseid 1)
                             baseid)))
     (ns-compose ns deplused-baseid)))
@@ -284,11 +302,13 @@
   (hash-delete tabtree item-id))
 
 (define-catch (get-parameter-by-key-item key item)
+  ; (when (equal? key "a") (--- item))
   (let ((inherited-key (inheritance+ key)))
     (ns+
       (or
-        (hash-ref item key NONE)
-        (hash-ref item inherited-key NONE)))))
+        (hash-ref item (strong-key key) #f)
+        (hash-ref item key #f)
+        (hash-ref item (inheritance+ key) NONE)))))
 
 (define-catch (get-parameter-by-key-item-id key item-id tabtree)
   (let ((item (hash-ref tabtree item-id ITEM_NONE)))
@@ -330,7 +350,7 @@
         (root-id (hash-ref root-item "__id" NONE))
         (old-root-item (hash-ref (*tabtree*) root-id ITEM_NONE))
         (local-inherities (get-inherities root-item))
-        (all-inherities (hash-union global-inherities local-inherities))
+        (all-inherities (hash-union global-inherities local-inherities #:combine merge-item-vals))
         (root-item (item- root-item (hash-keys local-inherities)))
         ((list sublines next-block-lines)
           (split-with
@@ -373,6 +393,8 @@
                           new-parent-ids))
         (root-item (item+ root-item (hash "__parent" new-parent-ids)))
         (root-item (item+ (incorporate-inherities global-inherities) root-item))
+        (root-item (hash-union root-item (get-strongs root-item)))
+        (root-item (item- root-item (->> root-item hash-keys (filter strong-key?))))
         (root-item (hash-union
                       (hash-union old-root-item root-item
                         #:combine merge-item-vals)

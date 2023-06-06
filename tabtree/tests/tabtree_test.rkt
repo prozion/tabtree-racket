@@ -35,7 +35,7 @@
     (check-equal? ($t countries.europe.russia.Moscow.metro-stations countries) '("Таганская" "Баррикадная" "Речной_Вокзал")))
 
   (test-case "check string reading"
-    (check-equal? ($t foo.bar.string foobars) "Однажды, quux and foox decided to walk northwards"))
+    (check-equal? ($t foo.bar.string foobars) "\"Однажды, quux and foox decided to walk northwards\""))
 
   (test-case "check dates reading"
     (check-equal? ($t countries.europe.norway.Stockholm.start countries) "1252")
@@ -56,9 +56,15 @@
     (check-equal? ($t foo.bar.multiple-strings foobars) '("qux" "foo and bar" "foo,bar,quux" "foo, bar and quux")))
 
   (test-case "check inherities"
-    (check-equal? ($t countries.europe.russia.Taganrog.feature countries) "RUNNING")
+    (check-equal? ($t countries.europe.russia.Taganrog.feature countries) "\"RUNNING\"")
     (check-equal? ($t foo.i foobars) NONE)
-    (check-equal? ($t foo.bar.i foobars) "100"))
+    (check-equal? ($t foo.bar.i foobars) "100")
+    (check-equal? ($t people.a foobars) NONE)
+    (check-equal? ($t people.Lena_Stogova.a foobars) (list "Acquaintance" "SovietPupil"))
+    (check-equal? ($t people.2020.a foobars) "Year")
+    (check-equal? ($t people.2020.John_Doe.a foobars) "Acquaintance")
+    (check-equal? ($t people.friends.Jail_Prison.a foobars) (list "Acquaintance" "Friend"))
+  )
 
   (test-case "check namespaces"
     (check-equal?

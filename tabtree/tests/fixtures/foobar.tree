@@ -40,4 +40,10 @@ Cell +hi-rel:consists-of +hi-inv-rel:part-of
 		Nucleoplasm
 Compartment +hi-inv-rel:part-of
 	Endosome
-    
+people +a:Acquaintance
+	Lena_Stogova place:Moscow a:SovietPupil
+	2020 *a:Year +hi-inv-rel:met
+		John_Doe place:Nevergrad
+	friends +a:Friend
+		Jail_Prison
+		

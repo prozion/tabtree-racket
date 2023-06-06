@@ -25,9 +25,9 @@
      (for (((k v) duplines))
        (displayln (format "~a [~a]" k (check-duplicates v))))))
 
-(case (hash-ref options "--check" #f)
+(case (hash-ref options "--option" #f)
   (("dupids")
     (check-duplicated-ids))
   (("duplines")
     (check-duplicated-lines))
-  (else (--- "Usage: tabtree-checks.rkt --check (dupids|duplines) TABTREE_FILEPATH\nDon't try 'man tabtree-checks' as it is not written yet.")))
+  (else (--- "Usage: check.rkt --option (dupids|duplines) TABTREE_FILEPATH\n")))
