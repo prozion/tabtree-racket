@@ -75,3 +75,24 @@
         (children-ids (get-children-ids tabtree))
         (upper-level-ids (minus all-ids children-ids)))
     upper-level-ids))
+
+(define-catch (special? s)
+  (string-prefix? s "__"))
+
+(define-catch (reification? s)
+  (index-of? '("rdf/subject" "rdf/predicate" "rdf/object") s))
+
+(define-catch (type? s)
+  (index-of? '("a" "+a" "*a" "type-of" "instance-of" "eq" "eq-property" "owl/sameAs") s))
+
+(define-catch (remove-specials item)
+  (hash-filter (λ (k v) (not (special? k))) item))
+
+(define-catch (remove-reifications item)
+  (hash-filter (λ (k v) (not (reification? k))) item))
+
+(define-catch (remove-types item)
+  (hash-filter (λ (k v) (not (type? k))) item))
+
+(define (statement? item)
+  (equal? ($ a item) "rdf/Statement"))

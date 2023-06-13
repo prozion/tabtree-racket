@@ -40,15 +40,37 @@
 
 ;;; Tabtree string
 (define (tabtree->string tabtree #:sorter (sorter id>) #:pars-print-order (pars-print-order #f))
-  (define (process-val val)
+  (define (add-meta object predicate subject)
+    (let* ((target-statement (->> tabtree
+                                  hash-values
+                                  (filter statement?)
+                                  (filter
+                                    (λ (item)
+                                      (and
+                                        (equal? object ($ rdf/object item))
+                                        (equal? predicate ($ rdf/predicate item))
+                                        (equal? subject ($ rdf/subject item)))))
+                                  first-or-only)))
+      (if-not target-statement
+        object
+        (let ((target-statement (->> target-statement remove-specials remove-reifications remove-types)))
+          (format
+            "~a~a"
+            object
+            (for/fold
+              ((res ""))
+              (((k v) target-statement))
+              (format "~a^~a:~a" res k v)))))))
+  (define (process-val val predicate subject)
     (cond
       ((rdf-list? val)
         (let* ((vals (hash-ref val "__values" empty))
               (vals (string-join vals ",")))
           (format "`~a`" vals)))
       ((list? val)
-        (string-join val ","))
-      (else val)))
+        (let ((val (map (λ (v) (add-meta v predicate subject)) val)))
+          (string-join val ",")))
+      (else (add-meta val predicate subject))))
   (define (item->string item (ks-order-sequence #f))
     (let* ((ks (-> item remove-specials-extended hash-keys))
           (ks (if ks-order-sequence
@@ -60,9 +82,10 @@
         (let ((v (or
                     (hash-ref item k #f)
                     (hash-ref item (inheritance+ k) #f))))
-          (format "~a ~a:~a" res k (process-val v))))))
+          (format "~a ~a:~a" res k (process-val v k ($ __id item)))))))
   (define (tabtree->string-recur item-ids tablevel)
     (let* ((items (map (λ (item-id) (hash-ref tabtree item-id #f)) item-ids))
+          (items (filter-not statement? items))
           (items (cleanmap items))
           (sorted-items (sort items sorter)))
       (for/fold

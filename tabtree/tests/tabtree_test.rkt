@@ -8,6 +8,7 @@
 (define countries-namespaced (parse-tabtree "fixtures/countries.tree" #:namespace "test"))
 (define foobars (parse-tabtree "fixtures/foobar.tree"))
 (define foobars-namespaced (parse-tabtree "fixtures/foobar.tree" #:namespace "test"))
+(define companies (parse-tabtree "fixtures/companies.tree"))
 ; ($t countries.europe.norway.Oslo.start countries)
 ; (---- countries-namespaced)
 
@@ -98,4 +99,20 @@
 
   (test-case "check anonymous items naming"
     (check-equal? ($t foo.quux.subfoo foobars) '("scipadoo" "quux_" "quux_1")))
+
+  (test-case "check metas (reification)"
+    (let ((get-reifications (λ (id)
+                              (->>
+                                companies
+                                hash-values
+                                (filter
+                                  (λ (x) (and
+                                            (equal? ($ a x) "rdf/Statement")
+                                            (equal? (hash-ref x "rdf/subject") id))))
+                                ; only-or-first
+                                ))))
+      (check-equal? (length (get-reifications "НПЦ_Алтай")) 1)
+      (check-equal? (length (get-reifications "Алкон")) 2)
+      (check-equal? (length (get-reifications "РЖД")) 5)
+      ))
 )

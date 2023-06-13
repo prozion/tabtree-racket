@@ -5,7 +5,7 @@
 (require (for-syntax odysseus racket/list racket/string racket/format))
 (require "globals.rkt")
 
-(provide deplus special? nodes-path? none? not-none? item-none? item-not-none? get-item get-parameter parse-tabtree namespace baseid namespaced? id inheritance+)
+(provide deplus nodes-path? none? not-none? item-none? item-not-none? get-item get-parameter parse-tabtree namespace baseid namespaced? id inheritance+)
 
 ; (: ItemValue (U String (Listof String) (Mutable-HashTable String String)))
 ; (: Item (Mutable-HashTable String ItemValue))
@@ -30,6 +30,7 @@
 (define *parse-info* (make-parameter (hash)))
 (define *source-lines* (make-parameter empty))
 
+(define meta-regexp-str "\\^\\S+")
 (define id-regexp-str "[?_A-Za-zА-ЯЁа-яёΑ-Ωα-ωØÅøå0-9№\\*][\"#*A-Za-zА-ЯЁа-яёΑ-Ωα-ω0-9№ØÅøå&@:._?+/\\*|<>\\?!\\-]*")
 (define id-regexp (pregexp id-regexp-str))
 (define key-regexp-str "[_a-zA-ZА-ЯЁа-яёα-ω0-9/|+*\\-]+")
@@ -85,12 +86,6 @@
 (define-catch (correct-id-name? s)
   (re-matches? (re-format "^~a$" id-regexp) s))
 
-(define-catch (special? s)
-  (string-prefix? s "__"))
-
-(define-catch (remove-specials item)
-  (hash-filter (λ (k v) (not (special? k))) item))
-
 (define-catch (ns+ s)
   (cond
     ((list? s) (map ns+ s))
@@ -145,16 +140,80 @@
     (ns+ (format "~a~a" parent-id child-id))
     child-id))
 
+(define-catch (remove-meta line)
+  (regexp-replace* #px"\\^[^^\\s\"`,]+" line ""))
+
+(define-catch (collect-meta line line-id)
+  (let* (
+        (chunks (map
+                  first
+                  (get-matches-pre
+                    (format "~a:[^\\s]+" key-regexp-str)
+                    line)))
+        (chunks (->> chunks (filter (λ (chunk) (re-matches? "\\^" chunk)))))
+        (value-regexp-str "[^^\"`\\s,]+") ; "[^^\\s]+"
+        (meta-regexp-str "[^\"`\\s,]+") ; "[^\\s]+"
+        (meta-hash
+          (for/fold
+            ((res1 (hash)))
+            ((chunk chunks))
+            (match-let* (((list key tagged-vals) (string-split-only-first chunk ":"))
+                        (tagged-vals (string-split tagged-vals ",")))
+                (hash-union
+                  res1
+                  (hash
+                    key
+                    (for/fold
+                      ((res2 (hash)))
+                      ((tagged-val tagged-vals))
+                      (match-let (((list val meta-pairs ...) (string-split tagged-val "^")))
+                        (hash-union
+                          res2
+                          (hash
+                            val
+                            (for/fold
+                              ((res3 (hash)))
+                              ((meta-pair meta-pairs))
+                              (match-let* (((list meta-key meta-val) (string-split meta-pair ":")))
+                                (hash-union
+                                  res3
+                                  (hash meta-key meta-val))))))))))))))
+    (for/fold
+      ((res1 (hash)))
+      (((key vals-metas) meta-hash))
+      (hash-union
+        res1
+        (for/fold
+          ((res2 (hash)))
+          (((val meta-pairs) vals-metas))
+          (let ((key (ns+ key))
+                (id (ns+ (format "Stmt_~a_~a_~a" line-id key val)))
+                )
+            (hash-union
+              res2
+              (hash
+                id
+                (hash-union
+                  meta-pairs
+                  (hash
+                    "__id" id
+                    "a" "rdf/Statement"
+                    "rdf/subject" line-id
+                    "rdf/predicate" key
+                    "rdf/object" val))))))))))
+
 (define-catch (get-item line)
   (let* (
-        ;;; remove meta information
-        (line (regexp-replace* #px"\\^[\\S]+" line ""))
+        ;;;
         (line-id-matches? (re-matches? (re-format "^\t*(~a)" id-regexp) line))
         (line-id (if line-id-matches?
                     (cadar (get-matches (re-format "^\t*(~a)" id-regexp) line))
                     NONE))
         (line-id (rename-anon-item (*parent-id*) line-id))
         (line-id (ns+ line-id))
+        ;;; remove meta information
+        (line (regexp-replace* #px"\\^[^^\\s,]+" line ""))
+        ;;;
         (collect-matched-kv (λ (re line (f identity))
                                 (for/hash
                                   ((chunk (regexp-match* re line #:match-select values)))
@@ -256,7 +315,8 @@
                       multiple-ref-parameters
                       multiple-integer-parameters
                       multiple-string-parameters
-                      multiple-url-parameters)))
+                      multiple-url-parameters
+                      )))
     ; add id to item, if parsed successfuly
     (cond
       ((not-none? line-id)
@@ -348,6 +408,7 @@
         (root-tabs-count (count-tabs root-line))
         (root-item (get-item root-line))
         (root-id (hash-ref root-item "__id" NONE))
+        (statements (collect-meta root-line root-id))
         (old-root-item (hash-ref (*tabtree*) root-id ITEM_NONE))
         (local-inherities (get-inherities root-item))
         (all-inherities (hash-union global-inherities local-inherities #:combine merge-item-vals))
@@ -410,6 +471,9 @@
       (*tabtree* (hash-union
                     old-tabtree
                     (hash root-id root-item)
+                    (if (hash-empty? statements)
+                      (hash)
+                      statements)
                     (if (empty? sublines)
                       (hash)
                       (parameterize ((*parent-id* root-id))

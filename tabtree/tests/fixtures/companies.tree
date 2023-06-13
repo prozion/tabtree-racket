@@ -1,0 +1,5 @@
+companies +a:Company
+	РЖД rev:1401G^year:2014^s:W,1510G^year:2015^s:W,2500G^year:2022^s:W inc:50.7G^year:2022^s:W w:711K^year:2019^s:W
+	Алкон place:Великий_Новгород start:1897 rev:138M^year:2017^s:W w:79^s:RbcCmp
+	НПО_Алмаз place:Москва start:1947 w:4K rev:12.3G
+	НПЦ_Алтай place:Бийск start:1958^s:W
