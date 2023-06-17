@@ -23,7 +23,7 @@
 (define (id< item-a item-b)
   (not (id> item-a item-b)))
 
-(define (filter-map-tabtree f tabtree)
+(define-catch (filter-map-tabtree f tabtree)
   (for/fold
     ((res1 (hash)))
     (((id item) tabtree))
@@ -44,7 +44,7 @@
       '("hi-rel"
         "hi-inv-rel"
         "section-default-class")
-      (deplus s)))
+      (deprefix s)))
   (define (source-key? k)
     (equal? k "__source"))
   (for/fold
@@ -55,11 +55,11 @@
       ((special? k) res)
       ((reserved-predicate? k) res)
       (else
-        (let* ((deplused-k (deplus k))
-              (old-v (hash-ref m deplused-k #f)))
+        (let* ((deprefixed-k (deprefix k))
+              (old-v (hash-ref m deprefixed-k #f)))
           (if old-v
-            (hash-set res deplused-k old-v)
-            (hash-set res deplused-k v)))))))
+            (hash-set res deprefixed-k old-v)
+            (hash-set res deprefixed-k v)))))))
 
 (define (get-children-ids tabtree)
   (->>
@@ -96,3 +96,8 @@
 
 (define (statement? item)
   (equal? ($ a item) "rdf/Statement"))
+
+; merge two tabtrees
+(define (t+ . tabtrees)
+  ; TODO make more sane merge
+  (apply hash-union tabtrees))

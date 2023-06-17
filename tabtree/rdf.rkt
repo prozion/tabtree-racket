@@ -73,7 +73,7 @@
         (string-join " ;\n")
         (string-append " .")))))
 
-(define (clean-up-sections-refs tabtree)
+(define-catch (clean-up-sections-refs tabtree)
   (define section-ids (list "classes" "properties" "individuals" "namespaces" "restrictions"))
   (utils/filter-map-tabtree
     (λ (v)

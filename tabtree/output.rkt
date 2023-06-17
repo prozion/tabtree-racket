@@ -39,7 +39,7 @@
     csv))
 
 ;;; Tabtree string
-(define (tabtree->string tabtree #:sorter (sorter id>) #:pars-print-order (pars-print-order #f))
+(define (tabtree->string tabtree #:sorter (sorter id>) #:pars-print-order (pars-print-order #f) #:ignore-keys ignore-keys)
   (define (add-meta object predicate subject)
     (let* ((target-statement (->> tabtree
                                   hash-values
@@ -73,6 +73,7 @@
       (else (add-meta val predicate subject))))
   (define (item->string item (ks-order-sequence #f))
     (let* ((ks (-> item remove-specials-extended hash-keys))
+          (ks (filter-not (λ (k) (index-of? ignore-keys k)) ks))
           (ks (if ks-order-sequence
                 (sort-by-order ks ks-order-sequence)
                 ks)))

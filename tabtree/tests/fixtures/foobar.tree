@@ -42,6 +42,7 @@ Compartment +hi-inv-rel:part-of
 	Endosome
 people +a:Acquaintance
 	Lena_Stogova place:Moscow a:SovietPupil
+	Alice_Selezneva place:Moscow *a:SovietPupil
 	2020 *a:Year +hi-inv-rel:met
 		John_Doe place:Nevergrad
 	friends +a:Friend

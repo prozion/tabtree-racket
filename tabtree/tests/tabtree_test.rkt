@@ -13,11 +13,11 @@
 ; (---- countries-namespaced)
 
 (module+ test
-  (test-case "check deplus"
-    (check-equal? (deplus "bar") "bar")
-    (check-equal? (deplus "+foo") "foo")
-    (check-equal? (deplus "type/rdf") "type/rdf")
-    (check-equal? (deplus "type/+rdf") "type/rdf"))
+  (test-case "check deprefix"
+    (check-equal? (deprefix "bar") "bar")
+    (check-equal? (deprefix "+foo") "foo")
+    (check-equal? (deprefix "type/rdf") "type/rdf")
+    (check-equal? (deprefix "type/+rdf") "type/rdf"))
 
   (test-case "check subtrees"
     (check-equal? (length (hash-keys (get-subtree '("countries" "europe") countries))) 12))
@@ -62,9 +62,10 @@
     (check-equal? ($t foo.bar.i foobars) "100")
     (check-equal? ($t people.a foobars) NONE)
     (check-equal? ($t people.Lena_Stogova.a foobars) (list "Acquaintance" "SovietPupil"))
+    (check-equal? ($t people.Alice_Selezneva.a foobars) "SovietPupil")
     (check-equal? ($t people.2020.a foobars) "Year")
     (check-equal? ($t people.2020.John_Doe.a foobars) "Acquaintance")
-    (check-equal? ($t people.friends.Jail_Prison.a foobars) (list "Acquaintance" "Friend"))
+    (check-equal? ($t people.friends.Jail_Prison.a foobars) "Friend")
   )
 
   (test-case "check namespaces"

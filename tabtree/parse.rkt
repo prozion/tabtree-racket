@@ -5,7 +5,7 @@
 (require (for-syntax odysseus racket/list racket/string racket/format))
 (require "globals.rkt")
 
-(provide deplus nodes-path? none? not-none? item-none? item-not-none? get-item get-parameter parse-tabtree namespace baseid namespaced? id inheritance+)
+(provide deprefix nodes-path? none? not-none? item-none? item-not-none? get-item get-parameter parse-tabtree namespace baseid namespaced? id inheritance+)
 
 ; (: ItemValue (U String (Listof String) (Mutable-HashTable String String)))
 ; (: Item (Mutable-HashTable String ItemValue))
@@ -110,7 +110,7 @@
     (ns+ (str "*" (baseid key)))))
 
 (define-catch (destrong key)
-  (deplus key "*"))
+  (deprefix key "*"))
 
 (define-catch (get-strongs item)
   (let* ((strongs (filter strong-key? (hash-keys item))))
@@ -124,13 +124,13 @@
     key
     (ns+ (str "+" (baseid key)))))
 
-(define-catch (deplus s (prefix "+"))
+(define-catch (deprefix s (prefix "+"))
   (let*-values
       (((ns baseid) (ns-decompose s))
-      ((deplused-baseid) (if (string-prefix? baseid prefix)
+      ((deprefixed-baseid) (if (string-prefix? baseid prefix)
                             (substring baseid 1)
                             baseid)))
-    (ns-compose ns deplused-baseid)))
+    (ns-compose ns deprefixed-baseid)))
 
 (define (anon-item-id? id)
   (re-matches? #px"^_[1-9]?$" id))
@@ -341,6 +341,10 @@
               (append v1 v2))
             ((and (hash? v1) (hash? v2))
               (hash-union v1 v2))
+            ((and (hash? v1) (string? v2))
+              (list v1 v2))
+            ((and (string? v1) (hash? v2))
+              (list v1 v2))
             (else
               (raise (format "Wrong types when merging values: ~a of type '~a' and ~a of type '~a'" v1 (type v1) v2 (type v2)))))))
       (if (list? result)
@@ -396,7 +400,7 @@
 
 (define-catch (incorporate-inherities inherities)
   (hash-map
-    (λ (k v) (values (deplus k) v))
+    (λ (k v) (values (deprefix k) v))
     inherities))
 
 (define-catch (fill-tree-iter source-lines (global-inherities (hash)))
@@ -411,7 +415,8 @@
         (statements (collect-meta root-line root-id))
         (old-root-item (hash-ref (*tabtree*) root-id ITEM_NONE))
         (local-inherities (get-inherities root-item))
-        (all-inherities (hash-union global-inherities local-inherities #:combine merge-item-vals))
+        ; (all-inherities (hash-union global-inherities local-inherities #:combine merge-item-vals))
+        (all-inherities (hash-union global-inherities local-inherities))
         (root-item (item- root-item (hash-keys local-inherities)))
         ((list sublines next-block-lines)
           (split-with
