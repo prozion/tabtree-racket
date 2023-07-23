@@ -1,0 +1,29 @@
+rdf a:owl/Ontology ns:http://www.w3.org/1999/02/22-rdf-syntax-ns# dc/title:"The RDF Concepts Vocabulary (RDF)" dc/description:"This is the RDF Schema for the RDF vocabulary terms in the RDF Namespace, defined in RDF 1.1 Concepts."
+	namespaces
+		rdfs ns:http://www.w3.org/2000/01/rdf-schema
+		owl ns:http://www.w3.org/2002/07/owl
+		dc ns:http://purl.org/dc/terms/
+	classes +a:rdfs/Class +hi-inv-rel:rdfs/subClassOf
+		rdfs/Literal +a:rdfs/Datatype
+			HTML rdfs/comment:"The datatype of RDF literals storing fragments of HTML content"
+			PlainLiteral rdfs/comment:"The class of plain (i.e. untyped) literal values, as used in RIF and OWL 2"
+			XMLLiteral
+			langString rdfs/comment:"The datatype of language-tagged string values"
+		rdfs/Container
+			Bag rdfs/comment:"The class of unordered containers"
+			Seq rdfs/comment:"The class of ordered containers"
+			Alt rdfs/comment:"The class of containers of alternatives."
+		rdfs/Resource 
+			List rdfs/comment:"The class of RDF Lists"
+			Property rdfs/comment:"The class of RDF properties"
+			Statement rdfs/comment:"The class of RDF statements"
+	properties +a:Property +hi-inv-rel:rdfs/subPropertyOf
+		type rdfs/domain:rdfs/Resource rdfs/range:rdfs/Class  rdfs/comment:"The subject is an instance of a class"
+		value rdfs/domain:rdfs/Resource rdfs/range:rdfs/Resource rdfs/comment:"Idiomatic property used for structured values"
+		subject rdfs/domain:Statement rdfs/range:rdfs/Resource
+		predicate rdfs/domain:Statement rdfs/range:rdfs/Resource ; rdfs/range: why not Property?
+		object rdfs/domain:Statement rdfs/range:rdfs/Resource
+		first rdfs/domain:List rdfs/range:rdfs/Resource rdfs/comment:"The first item in the subject RDF list" 
+		rest rdfs/domain:List rdfs/range:rdfs/Resource rdfs/comment:"The rest of the subject RDF list after the first item"
+	individuals
+		nil instance-of:List rdfs/comment:"The empty list, with no items in it. If the rest of a list is nil then the list has no more items in it"

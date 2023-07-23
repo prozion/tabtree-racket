@@ -5,7 +5,7 @@
 (require (for-syntax odysseus racket/list racket/string racket/format))
 (require "globals.rkt")
 
-(provide deprefix nodes-path? none? not-none? item-none? item-not-none? get-item get-parameter parse-tabtree namespace baseid namespaced? id inheritance+)
+(provide deprefix nodes-path? none? not-none? item-none? item-not-none? get-item get-parameter parse-tabtree namespace baseid namespaced? id inheritance+ correct-id-name? to-rdf-name)
 
 ; (: ItemValue (U String (Listof String) (Mutable-HashTable String String)))
 ; (: Item (Mutable-HashTable String ItemValue))
@@ -132,6 +132,16 @@
                             baseid)))
     (ns-compose ns deprefixed-baseid)))
 
+(define-catch (to-rdf-name s)
+  (let ((s (-> s
+            (string-replace #px"[%$~><]" "")
+            ; (string-replace "-" "_")
+            ; (string-replace "." "_")
+            )))
+    (if (namespaced? s)
+      (format "~a:~a" (namespace s) (baseid s))
+      (format ":~a" s))))
+
 (define (anon-item-id? id)
   (re-matches? #px"^_[1-9]?$" id))
 
@@ -186,8 +196,10 @@
         (for/fold
           ((res2 (hash)))
           (((val meta-pairs) vals-metas))
-          (let ((key (ns+ key))
+          (let* (
+                ; (key (ns+ key))
                 (id (ns+ (format "Stmt_~a_~a_~a" line-id key val)))
+                ; (id (to-rdf-name id))
                 )
             (hash-union
               res2
@@ -235,7 +247,7 @@
             line
             (λ (v)
               (hash
-                "__rdf-list" "true"
+                "__rdf_list" "true"
                 "__values" (-> v
                                (string-replace "`" "")
                                (string-split ",")
@@ -457,7 +469,9 @@
                               (= 1 (length new-parent-ids)))
                           (car new-parent-ids)
                           new-parent-ids))
-        (root-item (item+ root-item (hash "__parent" new-parent-ids)))
+        (root-item (item+ root-item (if (equal? new-parent-ids "")
+                                      (hash)
+                                      (hash "__parent" new-parent-ids))))
         (root-item (item+ (incorporate-inherities global-inherities) root-item))
         (root-item (hash-union root-item (get-strongs root-item)))
         (root-item (item- root-item (->> root-item hash-keys (filter strong-key?))))

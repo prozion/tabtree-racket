@@ -3,27 +3,21 @@
 (require rackunit)
 (require odysseus)
 (require odysseus/text)
+(require odysseus/time)
 (require (prefix-in query/ "query.rkt"))
 (require (prefix-in parse/ "parse.rkt"))
 (require (prefix-in utils/ "utils.rkt"))
 
+(require "globals.rkt")
+(require "basic-ontologies.rkt")
+
 (provide tabtree->rdf rdf-list?)
 
-(define aliases (hash
-    "a" "rdf/type"
-    "instance-of" "rdf/type"
-    "subclass-of" "rdfs/subClassOf"
-    "subproperty-of" "rdfs/subPropertyOf"
-    "alt" "owl/sameAs"
-    "eq" "owl/sameAs"
-    "eq-class" "owl/equivalentClass"
-    "eq-property" "owl/equivalentProperty"
-    "domain" "rdfs/domain"
-    "range" "rdfs/range"
-    "d" "rdfs/comment"
-    "deabbr" "rdfs/label"
-    "name" "rdfs/label"
-))
+(define XSD_NAMESPACE "http://www.w3.org/2001/XMLSchema#")
+
+(define Tabtree (make-parameter (hash)))
+(define PTypes (make-parameter (hash)))
+(define XSD_NS (make-parameter "xsd"))
 
 ;;; Tabtree -> RDF
 
@@ -31,26 +25,55 @@
   (or (not v) (= v "rdf/nil")))
 
 (define (rdf-list? v)
-  (and (hash? v) ($ __rdf-list v)))
+  (and (hash? v) ($ __rdf_list v)))
 
 (define (from-tabtree-alias predicate)
   (hash-ref aliases predicate predicate))
 
-(define (to-rdf-name s)
-  (if (parse/namespaced? s)
-    (format "~a:~a" (parse/namespace s) (parse/baseid s))
-    (format ":~a" s)))
+(define (get-o-type p)
+  (or
+    (hash-ref (PTypes) p #f)
+    (let* ((p-item (hash-ref (Tabtree) p #f))
+          (p-alias (hash-ref aliases p p))
+          (p-item (or p-item (hash-ref BASIC_ONTOLOGIES p-alias (hash))))
+          ; (_ (--- p p-alias p-item))
+          (p-range (hash-ref-some p-item '("range" "rdfs/range") "Unknown"))
+          (o-type (-> p-range (string-split "/") last)))
+      ; (--- p p-range)
+      (PTypes (hash-set (PTypes) p o-type))
+      o-type)))
 
-(define (object-value-str o)
+(define-catch (object-value-str o p)
+  (define object-value-str-p (λ (o) (object-value-str o p)))
   (cond
-    ((rdf-list? o) (format "(~a)" (string-join (map object-value-str ($ __values o)) " ")))
-    ((list? o) (string-join (map object-value-str o) ", "))
-    ((url? o) (format "<~a>" o))
+    ((rdf-list? o) (format "(~a)" (string-join (map object-value-str-p ($ __values o)) " ")))
+    ((list? o) (string-join (map object-value-str-p o) ", "))
     ((string-in-string? o) (format "~a" o))
-    ((number? o) (format "\"~a\"" o))
-    (else (to-rdf-name o))))
+    (else
+      (let* ((o-type (get-o-type p))
+            (p-item (hash-ref (Tabtree) p (hash))))
+        ; (--- o o-type)
+        (cond
+          ((equal? p "rdf/object")
+            (let* ((statement-item (->> (Tabtree) hash-values (filter (λ (item) (equal? ($ rdf/object item) o))) first-or-only))
+                  (predicate ($ rdf/predicate statement-item)))
+              (object-value-str o predicate)))
+          (else
+            (case o-type
+              (("Url" "Ontology") (format "<~a>" o))
+              (("Integer" "IntegerPositive") (format "\"~a\"^^~a:integer" (utils/parse-shorthand-value o) (XSD_NS)))
+              (("Number" "Float") (format "\"~a\"^^~a:numeric" o (XSD_NS)))
+              (("Year" "Literal") (format "\"~a\"" o))
+              (("Money") (format "\"~a\"" o))
+              (("Date") (format "\"~a.~a.~a\"^^~a:date"
+                            (dexify-year (or (year o) "xxxx"))
+                            (->number* (month o))
+                            (->number* (day o))
+                            (XSD_NS)))
+              (("Unknown" "Class") (parse/to-rdf-name o))
+              (else (parse/to-rdf-name o)))))))))
 
-(define (predicate-objects-str item)
+(define (make-predicate-objects-str item)
   ; "makes rdf string of predicate-object pairs out of m hashmap"
   (let ((item-rdf (->>
                         item
@@ -68,8 +91,8 @@
             (pushr
               res
               (format " ~a ~a"
-                (-> p from-tabtree-alias to-rdf-name)
-                (object-value-str o))))))
+                (-> p from-tabtree-alias parse/to-rdf-name)
+                (object-value-str o p))))))
         (string-join " ;\n")
         (string-append " .")))))
 
@@ -97,16 +120,25 @@
                       ; (filter (λ (item) (hash-ref* item "ns")))))
                       (filter-not (λ (item) (hash-ref* item "no-prefix")))
                       (map (λ (item) (hash-ref* item "ns")))))
+        (old-ontology-id ($ __id ontology-item))
         (ontology-item (if (not-empty? imports)
-                          (hash-union ontology-item (hash "owl/imports" imports))
-                          ontology-item)))
-    (hash-set tabtree ($ __id ontology-item) ontology-item)))
+                          (hash-union
+                            ontology-item
+                            (hash
+                              "__id" (hash-ref ontology-item "ns" "ontology")
+                              "owl/imports" imports))
+                          ontology-item))
+        (ontology-item (hash-remove ontology-item "ns")))
+    (hash-set tabtree old-ontology-id ontology-item)))
 
 (define (tabtree->rdf tabtree)
+  (Tabtree tabtree)
+  (XSD_NS (->> tabtree
+               hash-values
+               (filter (λ (item) (equal? ($ __parent item) "namespaces")))
+               (filter (λ (item) (equal? ($ ns item) XSD_NAMESPACE)))
+               ($ __id)))
   (let* (
-        (tabtree (extract-imports tabtree))
-        (namespaces (query/get-subtree '("namespaces") tabtree))
-        (namespaces (hash-remove namespaces "namespaces"))
         (default-prefix (or
                           (some->>
                             tabtree
@@ -116,6 +148,10 @@
                             only-or-first
                             ($ ns))
                           "https://example.org/ontology"))
+        (tabtree (extract-imports tabtree))
+        ; (_ (write-file "../capital-kgr/_temp/tabtree.rkt" tabtree))
+        (namespaces (query/get-subtree '("namespaces") tabtree))
+        (namespaces (hash-remove namespaces "namespaces"))
         (header (for/fold
                   ((res (format "@prefix : <~a> .\n" default-prefix)))
                   (((prefix ns-item) namespaces))
@@ -130,7 +166,11 @@
       ((id (sort
               (->> tabtree hash-keys (filter-not nil?))
               a-z)))
-      (let ((form (predicate-objects-str (hash-ref tabtree id))))
-        (if form
-          (format "~a~a:~a\n~a\n\n" res (or (parse/namespace id) "") (parse/baseid id) form)
-          res)))))
+      (let* ((item (hash-ref tabtree id))
+            (form (make-predicate-objects-str item)))
+        (cond
+          ((equal? (hash-ref item "a" #f) "owl/Ontology")
+            (format "~a<~a>\n~a\n\n" res ($ __id item) form))
+          (form
+            (format "~a~a~a\n~a\n\n" res (or (parse/namespace ($ __id item)) "") (parse/to-rdf-name (parse/baseid ($ __id item))) form))
+          (else res))))))

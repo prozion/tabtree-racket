@@ -23,6 +23,26 @@
 (define (id< item-a item-b)
   (not (id> item-a item-b)))
 
+(define-catch (filter-tabtree f tabtree)
+  (for/fold
+    ((res (hash)))
+    (((id item) tabtree))
+    (if (f id item)
+      (hash-union
+        res
+        (hash id item))
+      res)))
+
+(define-catch (map-tabtree f tabtree)
+  (for/fold
+    ((res (hash)))
+    (((id item) tabtree))
+    (hash-union
+      res
+      (hash
+        id
+        (f item)))))
+
 (define-catch (filter-map-tabtree f tabtree)
   (for/fold
     ((res1 (hash)))
@@ -101,3 +121,24 @@
 (define (t+ . tabtrees)
   ; TODO make more sane merge
   (apply hash-union tabtrees))
+
+(define (shorthand-value? o)
+  (->> o string-downcase (regexp-match? #px"^[<>~]?\\d+[kкmмgt]$")))
+
+(define (parse-shorthand-value value)
+  (let* ((value (string-downcase value))
+        (value (string-replace value #px"[<>~]" "")) ; TODO: somehow to manage this information?
+        (dollars? (string-suffix? value "$"))
+        (value (string-replace value "$" ""))
+        (suffix (string-last value))
+        (k (case suffix
+              (("k" "к") 1000)
+              (("m" "м") 1000000)
+              (("g") 1000000000)
+              (("t") 1000000000000)
+              (else 1)))
+        (value (string-replace value #px"[a-zа-я]" ""))
+        (value (->number value))
+        (value (* value k))
+        (value (exact-floor value)))
+    value))

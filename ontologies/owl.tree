@@ -1,0 +1,92 @@
+owl a:owl/Ontology ns:http://www.w3.org/2002/07/owl dc/title:"The OWL 2 Schema vocabulary (OWL 2)" rdfs/isDefinedBy:http://www.w3.org/TR/owl2-mapping-to-rdf/,http://www.w3.org/TR/owl2-rdf-based-semantics/,http://www.w3.org/TR/owl2-syntax/ namespace-transformation-iri:http://dev.w3.org/cvsweb/2009/owl-grddl/owx2rdf.xsl
+	namespaces
+		dc ns:http://purl.org/dc/terms/
+		grddl ns:http://www.w3.org/2003/g/data-view#
+		rdf ns:http://www.w3.org/1999/02/22-rdf-syntax-ns#
+		rdfs ns:http://www.w3.org/2000/01/rdf-schema#
+		xsd ns:http://www.w3.org/2001/XMLSchema#
+	; definitions is-defined-by:http://www.w3.org/2002/07/owl#
+	classes +a:rdfs/Class +hi-inv-rel:subclass-of
+		Class rdfs/label:"Class" rdfs/comment:"The class of OWL classes" subclass-of:rdfs/Class
+			Restriction rdfs/label:"Restriction" rdfs/comment:"The class of property restrictions"
+		rdfs/Class
+			DeprecatedClass rdfs/label:"DeprecatedClass" rdfs/comment:"The class of deprecated classes"
+		rdfs/Datatype
+			DataRange rdfs/label:"DataRange" rdfs/comment:"The class of OWL data ranges, which are special kinds of datatypes. Note: The use of the IRI owl:DataRange has been deprecated as of OWL 2. The IRI rdfs:Datatype SHOULD be used instead"
+		rdfs/Resource
+			AllDifferent rdfs/label:"AllDifferent" rdfs/comment:"The class of collections of pairwise different individuals"
+			AllDisjointClasses rdfs/label:"AllDisjointClasses" rdfs/comment:"The class of collections of pairwise disjoint classes"
+			AllDisjointProperties rdfs/label:"AllDisjointProperties" rdfs/comment:"The class of collections of pairwise disjoint properties"
+			Annotation rdfs/label:"Annotation" rdfs/comment:"The class of annotated annotations for which the RDF serialization consists of an annotated subject, predicate and object"
+			Axiom rdfs/label:"Axiom" rdfs/comment:"The class of annotated axioms for which the RDF serialization consists of an annotated subject, predicate and object"
+			NegativePropertyAssertion rdfs/label:"NegativePropertyAssertion" rdfs/comment:"The class of negative property assertions"
+			Ontology rdfs/label:"Ontology" rdfs/comment:"The class of ontologies"
+		rdf/Property
+			AnnotationProperty rdfs/label:"AnnotationProperty" rdfs/comment:"The class of annotation properties"
+			DatatypeProperty rdfs/label:"DatatypeProperty" rdfs/comment:"The class of data properties"
+			DeprecatedProperty rdfs/label:"DeprecatedProperty" rdfs/comment:"The class of deprecated properties"
+			FunctionalProperty rdfs/label:"FunctionalProperty" rdfs/comment:"The class of functional properties"
+			ObjectProperty rdfs/label:"ObjectProperty" rdfs/comment:"The class of object properties"
+				AsymmetricProperty rdfs/label:"AnnotationProperty" rdfs/comment:"The class of annotation properties"
+				InverseFunctionalProperty rdfs/label:"IrreflexiveProperty" rdfs/comment:"The class of inverse-functional properties"
+				IrreflexiveProperty rdfs/label:"InverseFunctionalProperty" rdfs/comment:"The class of irreflexive properties"
+				ReflexiveProperty rdfs/label:"ReflexiveProperty" rdfs/comment:"The class of reflexive properties"
+				SymmetricProperty rdfs/label:"SymmetricProperty" rdfs/comment:"The class of symmetric properties"
+				TransitiveProperty rdfs/label:"TransitiveProperty" rdfs/comment:"The class of transitive properties"
+			OntologyProperty rdfs/label:"OntologyProperty" rdfs/comment:"The class of ontology properties"
+		Thing rdfs/label:"Thing" rdfs/comment:"The class of OWL individuals"
+			NamedIndividual rdfs/label:"NamedIndividual" rdfs/comment:"The class of named individuals"
+			Nothing rdfs/label:"Nothing" rdfs/comment:"This is the empty class"
+	properties +a:rdf/Property
+		allValuesFrom rdfs/comment:"The property that determines the class that a universal property restriction refers to" rdfs/domain:Restriction rdfs/range:rdfs/Class
+		annotatedProperty rdfs/comment:"The property that determines the predicate of an annotated axiom or annotated annotation" rdfs/domain:rdfs/Resource rdfs/range:rdfs/Resource
+		annotatedSource rdfs/comment:"The property that determines the subject of an annotated axiom or annotated annotation" rdfs/domain:rdfs/Resource rdfs/range:rdfs/Resource
+		annotatedTarget rdfs/comment:"The property that determines the object of an annotated axiom or annotated annotation" rdfs/domain:rdfs/Resource rdfs/range:rdfs/Resource
+		assertionProperty rdfs/comment:"The property that determines the predicate of a negative property assertion" rdfs/domain:NegativePropertyAssertion rdfs/range:rdf/Property
+		backwardCompatibleWith a:AnnotationProperty,OntologyProperty rdfs/comment:"The annotation property that indicates that a given ontology is backward compatible with another ontology" rdfs/domain:Ontology rdfs/range:Ontology
+		bottomDataProperty a:DatatypeProperty rdfs/comment:"The data property that does not relate any individual to any data value" rdfs/domain:Thing rdfs/range:rdfs/Literal
+		bottomObjectProperty a:ObjectProperty rdfs/comment:"The object property that does not relate any two individuals" rdfs/domain:Thing rdfs/range:Thing
+		cardinality rdfs/comment:"The property that determines the cardinality of an exact cardinality restriction" rdfs/domain:Restriction rdfs/range:xsd/nonNegativeInteger
+		complementOf rdfs/comment:"The property that determines that a given class is the complement of another class" rdfs/domain:Class rdfs/range:Class
+		datatypeComplementOf rdfs/comment:"The property that determines that a given data range is the complement of another data range with respect to the data domain" rdfs/domain:rdfs/Datatype rdfs/range:rdfs/Datatype
+		deprecated a:AnnotationProperty rdfs/comment:"The annotation property that indicates that a given entity has been deprecated" rdfs/domain:rdfs/Resource rdfs/range:rdfs/Resource
+		differentFrom rdfs/comment:"The property that determines that two given individuals are different" rdfs/domain:Thing rdfs/range:Thing
+		disjointUnionOf rdfs/comment:"The property that determines that a given class is equivalent to the disjoint union of a collection of other classes" rdfs/domain:Class rdfs/range:rdf/List
+		disjointWith rdfs/comment:"The property that determines that two given classes are disjoint" rdfs/domain:Class rdfs/range:Class
+		distinctMembers rdfs/comment:"The property that determines the collection of pairwise different individuals in a owl:AllDifferent axiom" rdfs/domain:AllDifferent rdfs/range:rdf/List
+		equivalentClass rdfs/comment:"The property that determines that two given classes are equivalent, and that is used to specify datatype definitions" rdfs/domain:rdfs/Class rdfs/range:rdfs/Class
+		equivalentProperty rdfs/comment:"The property that determines that two given properties are equivalent" rdfs/domain:rdf/Property rdfs/range:rdf/Property
+		hasKey rdfs/comment:"The property that determines the collection of properties that jointly build a key" rdfs/domain:Class rdfs/range:rdf/List
+		hasSelf rdfs/comment:"The property that determines the property that a self restriction refers to" rdfs/domain:Restriction rdfs/range:rdfs/Resource
+		hasValue rdfs/comment:"The property that determines the individual that a has-value restriction refers to" rdfs/domain:Restriction rdfs/range:rdfs/Resource
+		imports a:OntologyProperty rdfs/comment:"The property that is used for importing other ontologies into a given ontology" rdfs/domain:Ontology rdfs/range:Ontology
+		incompatibleWith a:AnnotationProperty,OntologyProperty rdfs/comment:"The annotation property that indicates that a given ontology is incompatible with another ontology" rdfs/domain:Ontology rdfs/range:Ontology
+		intersectionOf rdfs/comment:"The property that determines the collection of classes or data ranges that build an intersection" rdfs/domain:rdfs/Class rdfs/range:rdf/List	
+		inverseOf rdfs/comment:"The property that determines that two given properties are inverse" rdfs/domain:ObjectProperty rdfs/range:ObjectProperty
+		maxCardinality rdfs/comment:"The property that determines the cardinality of a maximum cardinality restriction" rdfs/domain:Restriction rdfs/range:xsd/nonNegativeInteger
+		maxQualifiedCardinality rdfs/comment:"The property that determines the cardinality of a maximum qualified cardinality restriction" rdfs/domain:Restriction rdfs/range:xsd/nonNegativeInteger
+		members rdfs/comment:"The property that determines the collection of members in either a owl:AllDifferent, owl:AllDisjointClasses or owl:AllDisjointProperties axiom" rdfs/domain:rdfs/Resource rdfs/range:rdf/List
+		minCardinality rdfs/comment:"The property that determines the cardinality of a minimum cardinality restriction" rdfs/domain:Restriction rdfs/range:xsd/nonNegativeInteger
+		minQualifiedCardinality rdfs/comment:"The property that determines the cardinality of a minimum qualified cardinality restriction" rdfs/domain:Restriction rdfs/range:xsd/nonNegativeInteger
+		onClass rdfs/comment:"The property that determines the class that a qualified object cardinality restriction refers to" rdfs/domain:Restriction rdfs/range:Class
+		onDataRange rdfs/comment:"The property that determines the data range that a qualified data cardinality restriction refers to" rdfs/domain:Restriction rdfs/range:rdfs/Datatype
+		onDatatype rdfs/comment:"The property that determines the datatype that a datatype restriction refers to" rdfs/domain:rdfs/Datatype rdfs/range:rdfs/Datatype
+		oneOf rdfs/comment:"The property that determines the collection of individuals or data values that build an enumeration" rdfs/domain:rdfs/Class rdfs/range:rdf/List
+		onProperties rdfs/comment:"The property that determines the n-tuple of properties that a property restriction on an n-ary data range refers to" rdfs/domain:Restriction rdfs/range:rdf/List
+		onProperty rdfs/comment:"The property that determines the property that a property restriction refers to" rdfs/domain:Restriction rdfs/range:rdf/Property
+		priorVersion a:AnnotationProperty,OntologyProperty rdfs/comment:"The annotation property that indicates the predecessor ontology of a given ontology" rdfs/domain:Ontology rdfs/range:Ontology
+		propertyChainAxiom rdfs/comment:"The property that determines the n-tuple of properties that build a sub property chain of a given property" rdfs/domain:ObjectProperty rdfs/range:rdf/List
+		propertyDisjointWith rdfs/comment:"The property that determines that two given properties are disjoint" rdfs/domain:rdf/Property rdfs/range:rdf/Property
+		qualifiedCardinality rdfs/comment:"The property that determines the cardinality of an exact qualified cardinality restriction" rdfs/domain:Restriction rdfs/range:xsd/nonNegativeInteger
+		sameAs rdfs/comment:"The property that determines that two given individuals are equal" rdfs/domain:Thing rdfs/range:Thing
+		someValuesFrom rdfs/comment:"The property that determines the class that an existential property restriction refers to" rdfs/domain:Restriction rdfs/range:rdfs/Class
+		sourceIndividual rdfs/comment:"The property that determines the subject of a negative property assertion" rdfs/domain:NegativePropertyAssertion rdfs/range:Thing
+		targetIndividual rdfs/comment:"The property that determines the object of a negative object property assertion" rdfs/domain:NegativePropertyAssertion rdfs/range:Thing
+		targetValue rdfs/comment:"The property that determines the value of a negative data property assertion" rdfs/domain:NegativePropertyAssertion rdfs/range:rdfs/Literal
+		topDataProperty a:DatatypeProperty rdfs/comment:"The data property that relates every individual to every data value" rdfs/domain:Thing rdfs/range:rdfs/Literal
+		topObjectProperty a:ObjectProperty rdfs/comment:"The object property that relates every two individuals" rdfs/domain:Thing rdfs/range:Thing
+		unionOf rdfs/comment:"The property that determines the collection of classes or data ranges that build a union" rdfs/domain:rdfs/Class rdfs/range:rdf/List
+		versionInfo a:AnnotationProperty rdfs/comment:"The annotation property that provides version information for an ontology or another OWL construct" rdfs/domain:rdfs/Resource rdfs/range:rdfs/Resource
+		versionIRI a:OntologyProperty rdfs/comment:"The property that identifies the version IRI of an ontology" rdfs/domain:Ontology rdfs/range:Ontology
+		withRestrictions rdfs/comment:"he property that determines the collection of facet-value pairs that define a datatype restriction" rdfs/domain:rdfs/Datatype rdfs/range:rdf/List
+	
