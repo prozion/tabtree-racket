@@ -22,6 +22,7 @@
     "domain" "rdfs/domain"
     "range" "rdfs/range"
     "d" "rdfs/comment"
+    "def" "skos/definition"
     "deabbr" "rdfs/label"
     "name" "rdfs/label"
     "disjoint-with" "owl/disjointWith"

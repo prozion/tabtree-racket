@@ -550,7 +550,7 @@
   (for/fold
     ((res empty))
     ((line tabtree-source))
-    (let ((file-insertion-match (regexp-match #rx"^[^;]*\\[(.*)\\]" line)))
+    (let ((file-insertion-match (regexp-match #rx"^[^;:]*\\[(.*)\\]" line)))
       (if file-insertion-match
           (let* (
                 (base-tabs-number (count-tabs line))
