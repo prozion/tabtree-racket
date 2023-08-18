@@ -10,7 +10,7 @@ countries
 		norway a:Country +a:dbpedia/City
 			Oslo rdf/type:dbpedia/City start-lower:1050^s:wi start-upper:1051
 		sweden a:Country +a:dbpedia/City
-			Stockholm start:1252 regions:Gamlastan rem:"The city known for ABBA and its beautiful rocky metro"
+			Stockholm start:1252 regions:Gamlastan d:"The city known for ABBA and its beautiful rocky metro"
 	africa +hierarchy-relation:includes a:Continent 
 		egypt a:Country +a:dbpedia/City
 			Alexandria start:BC-331

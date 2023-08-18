@@ -23,7 +23,7 @@
     "range" "rdfs/range"
     "d" "rdfs/comment"
     "def" "skos/definition"
-    "deabbr" "rdfs/label"
+    "deabbr" "dc/title"
     "name" "rdfs/label"
     "disjoint-with" "owl/disjointWith"
 ))
