@@ -4,7 +4,7 @@
 (require "parse.rkt")
 (require compatibility/defmacro)
 (require (for-syntax odysseus racket/list racket/string))
-(require (file "~/.local/share/tabtree/settings.rkt"))
+; (require (file "~/.local/share/tabtree/settings.rkt"))
 (require tabtree/utils)
 
 (provide (all-defined-out))
