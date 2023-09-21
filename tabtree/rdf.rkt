@@ -63,7 +63,7 @@
               (("Url" "Ontology") (format "<~a>" o))
               (("Integer" "IntegerPositive") (format "\"~a\"^^~a:integer" (utils/parse-shorthand-value o) (XSD_NS)))
               (("Number" "Float") (format "\"~a\"^^~a:numeric" o (XSD_NS)))
-              (("Year" "Literal") (format "\"~a\"" o))
+              (("Year" "Literal" "IntegerAbbreviated" "UrlCore") (format "\"~a\"" o))
               (("Money") (format "\"~a\"" o))
               (("Date") (format "\"~a.~a.~a\"^^~a:date"
                             (dexify-year (or (year o) "xxxx"))
