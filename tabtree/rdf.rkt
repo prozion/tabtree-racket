@@ -59,18 +59,24 @@
                   (predicate ($ rdf/predicate statement-item)))
               (object-value-str o predicate)))
           (else
-            (case o-type
-              (("Url" "Ontology") (format "<~a>" o))
-              (("Integer" "IntegerPositive") (format "\"~a\"^^~a:integer" (utils/parse-shorthand-value o) (XSD_NS)))
-              (("Number" "Float") (format "\"~a\"^^~a:numeric" o (XSD_NS)))
-              (("Year" "Literal" "IntegerAbbreviated" "UrlCore") (format "\"~a\"" o))
-              (("Money") (format "\"~a\"" o))
-              (("Date") (format "\"~a.~a.~a\"^^~a:date"
+            (cond
+              ; Tree of XML Schema datatypes: https://www.w3.org/TR/xmlschema-2/#built-in-datatypes
+              ((utils/literal-predicate? p (Tabtree)) (format "\"~a\"" o))
+              ((index-of? '("Url" "Ontology") o-type) (format "<~a>" o))
+              ((index-of? '("Boolean") o-type) (format "\"~a\"^^~a:boolean" o (XSD_NS)))
+              ((index-of? '("Integer") o-type) (format "\"~a\"^^~a:integer" (utils/parse-shorthand-value o) (XSD_NS)))
+              ((index-of? '("PositiveInteger") o-type) (format "\"~a\"^^~a:positiveInteger" (utils/parse-shorthand-value o) (XSD_NS)))
+              ((index-of? '("Decimal") o-type) (format "\"~a\"^^~a:decimal" o (XSD_NS)))
+              ((index-of? '("Float") o-type) (format "\"~a\"^^~a:float" o (XSD_NS)))
+              ((index-of? '("Double") o-type) (format "\"~a\"^^~a:double" o (XSD_NS)))
+              ((index-of? '("String") o-type) (format "\"~a\"^^~a:string" o (XSD_NS)))
+              ((index-of? '("Year") o-type) (format "\"~a\"^^~a:gYear" o (XSD_NS)))
+              ((index-of? '("Date") o-type) (format "\"~a.~a.~a\"^^~a:date"
                             (dexify-year (or (year o) "xxxx"))
                             (->number* (month o))
                             (->number* (day o))
                             (XSD_NS)))
-              (("Unknown" "Class") (parse/to-rdf-name o))
+              ((index-of? '("Class") o-type) (parse/to-rdf-name o))
               (else (parse/to-rdf-name o)))))))))
 
 (define (make-predicate-objects-str item)
@@ -97,7 +103,6 @@
         (string-append " .")))))
 
 (define-catch (clean-up-sections-refs tabtree)
-  (define section-ids (list "classes" "properties" "individuals" "namespaces" "restrictions"))
   (utils/filter-map-tabtree
     (λ (v)
       (cond

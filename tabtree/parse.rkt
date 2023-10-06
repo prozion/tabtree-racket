@@ -161,7 +161,7 @@
                     (format "~a:[^\\s]+" key-regexp-str)
                     line)))
         (chunks (->> chunks (filter (λ (chunk) (re-matches? "\\^" chunk)))))
-        (value-regexp-str "[^^\"`\\s,]+") ; "[^^\\s]+"
+        (value-regexp-str "[^^\"`\\s,]*") ; "[^^\\s]+"
         (meta-regexp-str "[^\"`\\s,]+") ; "[^\\s]+"
         (meta-hash
           (for/fold
@@ -235,7 +235,7 @@
                       (re-format "(?<=\\s)(~a):(~a)(?=(\\s|$))" (pregexp key-regexp-str) value-regexp-str)))
         (all-parameters
           (collect-matched-kv
-            (v-pattern "\\S+")
+            (v-pattern "[^^\\s,/]") ; \\S+
             line))
         (ref-parameters
           (collect-matched-kv

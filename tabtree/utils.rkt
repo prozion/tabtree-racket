@@ -4,6 +4,7 @@
 
 (require odysseus)
 (require "parse.rkt")
+(require "globals.rkt")
 (require compatibility/defmacro)
 (require (for-syntax odysseus racket/list racket/string))
 
@@ -22,6 +23,10 @@
 
 (define (id< item-a item-b)
   (not (id> item-a item-b)))
+
+(define (id* item)
+  ; extract both id and alternative id (alt) from item
+  (flatten `(,(id item) ,($ alt item))))
 
 (define-catch (filter-tabtree f tabtree)
   (for/fold
@@ -60,11 +65,7 @@
 
 (define-catch (remove-specials-extended m)
   (define (reserved-predicate? s)
-    (index-of?
-      '("hi-rel"
-        "hi-inv-rel"
-        "section-default-class")
-      (deprefix s)))
+    (index-of? reserved-predicates (deprefix s)))
   (define (source-key? k)
     (equal? k "__source"))
   (for/fold
@@ -142,3 +143,34 @@
         (value (* value k))
         (value (exact-floor value)))
     value))
+
+(define-catch (literal-predicate? predicate tabtree)
+  (let ((predicate (hash-ref aliases predicate predicate)))
+    (cond
+      ((list? predicate) (ormap (curryr literal-predicate? tabtree) predicate))
+      ((not predicate) #f)
+      ((index-of? '("rdfs/comment" "rdfs/label" "ns") predicate) #t)
+      (else
+        (let* ((predicate-item (hash-ref tabtree predicate (hash)))
+              (predicate-range (hash-ref predicate-item "range" #f))
+              (predicate-superproperty (hash-ref predicate-item "subproperty-of" #f)))
+          (cond
+            ((and predicate-range (literal? predicate-range tabtree))
+              #t)
+            (else
+              (and predicate-superproperty (literal-predicate? predicate-superproperty tabtree)))))))))
+
+(define-catch (literal? class tabtree)
+  ; (--- 333 class)
+  (cond
+    ((list? class) (ormap (curryr literal? tabtree) class))
+    ((not class) #f)
+    ((index-of? section-ids class) #f)
+    ((index-of? (list "owl/Thing") class) #f)
+    ((index-of? (list "Year" "Date" "String" "Double" "Float" "Decimal" "PositiveInteger" "Integer" "Boolean") class) #t)
+    ((index-of? (list "rdfs/Literal") class) #t)
+    (else
+      (let* ((class-item (hash-ref tabtree class (hash)))
+            (superclass (hash-ref class-item "subclass-of" #f)))
+        ; (--- 444 class superclass)
+        (literal? superclass tabtree)))))

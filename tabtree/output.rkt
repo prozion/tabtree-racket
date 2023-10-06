@@ -10,7 +10,7 @@
 (provide (all-defined-out))
 
 ;;; CSV
-(define (make-csv tabtree #:delimeter (delimeter "\t") #:headers (headers #f) #:collection-delimeter (collection-delimeter ","))
+(define-catch (make-csv tabtree #:delimeter (delimeter "\t") #:headers (headers #f) #:collection-delimeter (collection-delimeter ","))
   (let* ((tabtree-cleaned (hash-map (λ (k v) (values k (remove-specials-extended v))) tabtree))
         (headers (or
                     headers
@@ -39,7 +39,7 @@
     csv))
 
 ;;; Tabtree string
-(define (tabtree->string tabtree #:sorter (sorter id>) #:pars-print-order (pars-print-order #f) #:ignore-keys (ignore-keys empty))
+(define-catch (tabtree->string tabtree #:sorter (sorter id>) #:pars-print-order (pars-print-order #f) #:ignore-keys (ignore-keys empty))
   (define (add-meta object predicate subject)
     (let* ((target-statement (->> tabtree
                                   hash-values

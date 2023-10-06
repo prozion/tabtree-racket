@@ -10,6 +10,8 @@
 
 (define *ns* (make-parameter NONE))
 
+(define section-ids (list "classes" "properties" "individuals" "namespaces" "restrictions"))
+
 (define aliases (hash
     "a" "rdf/type"
     "instance-of" "rdf/type"
@@ -22,8 +24,8 @@
     "domain" "rdfs/domain"
     "range" "rdfs/range"
     "d" "rdfs/comment"
-    "def" "skos/definition"
-    "deabbr" "dc/title"
     "name" "rdfs/label"
     "disjoint-with" "owl/disjointWith"
 ))
+
+(define reserved-predicates (list HIERARCHY_RELATION HIERARCHY_INVERSE_RELATION "ns"))
