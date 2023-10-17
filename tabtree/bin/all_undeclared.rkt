@@ -9,6 +9,8 @@
 (require tabtree/globals)
 
 (define literal-predicates (make-parameter (hash)))
+(define alts (make-parameter empty))
+
 (define tabtree-file (get-command-value (current-command-line-arguments)))
 (define tabtree (parse-tabtree tabtree-file))
 
@@ -27,7 +29,10 @@
             (((k vs) all-p-o))
             (let ((cached-value (hash-ref (literal-predicates) k #f)))
               (cond
-                ((index-of? (list "alt" "rdf/subject" "rdf/predicate" "rdf/object") k) res)
+                ((index-of? (list "rdf/subject" "rdf/predicate" "rdf/object") k) res)
+                ((equal? "alt" k)
+                  (alts (->> vs (append (alts)) remove-duplicates))
+                  res)
                 ((index-of? id-likes k) res)
                 ((equal? cached-value "literal") res)
                 ((equal? cached-value "non-literal")
@@ -42,7 +47,7 @@
         (declared-ids (-> tabtree hash-keys))
         (alias-ids (hash-keys aliases))
         (namespaced-ids (filter namespaced? not-literal-os)))
-    (minus (minus not-literal-os (join namespaced-ids alias-ids)) declared-ids)))
+    (minus (minus not-literal-os (join namespaced-ids alias-ids (alts))) declared-ids)))
 
 (--- "Undefined predicates:" (list->pretty-string (find-undeclared-predicates tabtree)))
-(--- "Undefined objects:" (list->pretty-string (find-undeclared-objects tabtree (list "sid" "tsid"))))
+(--- "Undefined objects:" (list->pretty-string (find-undeclared-objects tabtree (list "sid" "tsid" "former-id"))))

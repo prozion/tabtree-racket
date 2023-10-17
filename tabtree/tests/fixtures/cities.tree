@@ -1,0 +1,10 @@
+cities a:owl/Ontology
+	classes +a:owl/Class
+		Year
+	properties +a:rdf/Property
+		alt
+		twin
+		year range:Year
+	individuals
+		Москва alt:Moscow twin:Бейрут,Белград,Берлин year:1147
+		Санкт-Петербург alt:Петроград,Ленинград year:1703
