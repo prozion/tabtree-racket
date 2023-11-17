@@ -36,10 +36,13 @@
     (let* ((p-item (hash-ref (Tabtree) p #f))
           (p-alias (hash-ref aliases p p))
           (p-item (or p-item (hash-ref BASIC_ONTOLOGIES p-alias (hash))))
-          ; (_ (--- p p-alias p-item))
-          (p-range (hash-ref-some p-item '("range" "rdfs/range") "Unknown"))
-          (o-type (-> p-range (string-split "/") last)))
-      ; (--- p p-range)
+          (p-range (hash-ref-some p-item '("range" "rdfs/range") #f))
+          (o-type (if p-range
+                    (-> p-range (string-split "/") last)
+                    (let ((p-superproperty-id (hash-ref p-item "subproperty-of" #f)))
+                      (if p-superproperty-id
+                        (get-o-type p-superproperty-id)
+                        "Unknown")))))
       (PTypes (hash-set (PTypes) p o-type))
       o-type)))
 
@@ -52,7 +55,6 @@
     (else
       (let* ((o-type (get-o-type p))
             (p-item (hash-ref (Tabtree) p (hash))))
-        ; (--- o o-type)
         (cond
           ((equal? p "rdf/object")
             (let* ((statement-item (->> (Tabtree) hash-values (filter (λ (item) (equal? ($ rdf/object item) o))) first-or-only))
@@ -61,22 +63,22 @@
           (else
             (cond
               ; Tree of XML Schema datatypes: https://www.w3.org/TR/xmlschema-2/#built-in-datatypes
-              ((utils/literal-predicate? p (Tabtree)) (format "\"~a\"" o))
               ((index-of? '("Url" "Ontology") o-type) (format "<~a>" o))
               ((index-of? '("Boolean") o-type) (format "\"~a\"^^~a:boolean" o (XSD_NS)))
               ((index-of? '("Integer") o-type) (format "\"~a\"^^~a:integer" (utils/parse-shorthand-value o) (XSD_NS)))
               ((index-of? '("PositiveInteger") o-type) (format "\"~a\"^^~a:positiveInteger" (utils/parse-shorthand-value o) (XSD_NS)))
-              ((index-of? '("Decimal") o-type) (format "\"~a\"^^~a:decimal" o (XSD_NS)))
+              ((index-of? '("Decimal") o-type) (format "\"~a\"^^~a:decimal" (utils/parse-shorthand-value o) (XSD_NS)))
               ((index-of? '("Float") o-type) (format "\"~a\"^^~a:float" o (XSD_NS)))
               ((index-of? '("Double") o-type) (format "\"~a\"^^~a:double" o (XSD_NS)))
               ((index-of? '("String") o-type) (format "\"~a\"^^~a:string" o (XSD_NS)))
               ((index-of? '("Year") o-type) (format "\"~a\"^^~a:gYear" o (XSD_NS)))
-              ((index-of? '("Date") o-type) (format "\"~a.~a.~a\"^^~a:date"
+              ((index-of? '("Date") o-type) (format "\"~a-~a-~a\"^^~a:date"
                             (dexify-year (or (year o) "xxxx"))
-                            (->number* (month o))
-                            (->number* (day o))
+                            (format-number "dd" (->number* (month o)) #:filler "0")
+                            (format-number "dd" (->number* (day o)) #:filler "0")
                             (XSD_NS)))
               ((index-of? '("Class") o-type) (parse/to-rdf-name o))
+              ((utils/literal-predicate? p (Tabtree)) (format "\"~a\"" o))
               (else (parse/to-rdf-name o)))))))))
 
 (define (make-predicate-objects-str item)

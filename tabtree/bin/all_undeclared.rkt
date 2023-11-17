@@ -31,7 +31,7 @@
               (cond
                 ((index-of? (list "rdf/subject" "rdf/predicate" "rdf/object") k) res)
                 ((equal? "alt" k)
-                  (alts (->> vs (append (alts)) remove-duplicates))
+                  (alts (->> vs listify (append (alts)) remove-duplicates))
                   res)
                 ((index-of? id-likes k) res)
                 ((equal? cached-value "literal") res)
@@ -49,5 +49,5 @@
         (namespaced-ids (filter namespaced? not-literal-os)))
     (minus (minus not-literal-os (join namespaced-ids alias-ids (alts))) declared-ids)))
 
-(--- "Undefined predicates:" (list->pretty-string (find-undeclared-predicates tabtree)))
-(--- "Undefined objects:" (list->pretty-string (find-undeclared-objects tabtree (list "sid" "tsid" "former-id"))))
+(--- "Undefined predicates:" (list->pretty-string (sort (find-undeclared-predicates tabtree) a-z)))
+(--- "Undefined objects:" (list->pretty-string (sort (find-undeclared-objects tabtree (list "sid" "tsid" "former-id")) a-z)))

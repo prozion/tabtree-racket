@@ -6,6 +6,6 @@
 (require "../rdf.rkt")
 
 ; (define foobar (parse-tabtree "fixtures/foobar.tree"))
-(define owl (parse-tabtree "../../../ontologies/tabtree/basic/owl.tree"))
+(define owl (parse-tabtree "../../ontologies/owl.tree"))
 
 (write-file "output/owl.ttl" (tabtree->rdf owl))

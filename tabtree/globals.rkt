@@ -15,6 +15,7 @@
 (define aliases (hash
     "a" "rdf/type"
     "instance-of" "rdf/type"
+    "see-also" "rdfs/seeAlso"
     "subclass-of" "rdfs/subClassOf"
     "subproperty-of" "rdfs/subPropertyOf"
     "alt" "owl/sameAs"
