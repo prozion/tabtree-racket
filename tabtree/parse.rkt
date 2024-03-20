@@ -473,7 +473,7 @@
                                       (hash)
                                       (hash "__parent" new-parent-ids))))
         (root-item (item+ (incorporate-inherities global-inherities) root-item))
-        (root-item (hash-union root-item (get-strongs root-item)))
+        ; (root-item (hash-union root-item (get-strongs root-item)))
         (root-item (item- root-item (->> root-item hash-keys (filter strong-key?))))
         (root-item (hash-union
                       (hash-union old-root-item root-item
